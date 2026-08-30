@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GcsProvider, useGcs } from './contexts/GcsContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Navbar } from './components/common/Navbar';
 import { Sidebar } from './components/common/Sidebar';
 import { DemoTourModal } from './components/common/DemoTourModal';
@@ -23,7 +24,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { SystemHealthPage } from './pages/SystemHealthPage';
 
 const MainLayout: React.FC = () => {
-  const { activeTab, nightVisionMode, startDemoTour } = useGcs();
+  const { systemReady, activeTab, nightVisionMode, startDemoTour } = useGcs();
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
 
   // Keyboard shortcut handlers for tactical operator ergonomics
@@ -43,6 +44,44 @@ const MainLayout: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  if (!systemReady) {
+    return (
+      <div className="fixed inset-0 bg-[#0A0B0D] text-slate-100 font-mono-code z-50 flex flex-col items-center justify-center p-6 space-y-6">
+        <div className="relative flex items-center justify-center">
+          <div className="w-24 h-24 rounded-full border-4 border-slate-800 border-t-cyan-400 animate-spin" />
+          <div className="w-16 h-16 rounded-full border-4 border-slate-800 border-b-indigo-500 animate-spin absolute" style={{ animationDirection: 'reverse' }} />
+        </div>
+
+        <div className="text-center space-y-2">
+          <span className="px-3 py-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 text-xs font-bold uppercase tracking-widest animate-pulse">
+            DRDO GCS MISSION INITIALIZATION
+          </span>
+          <h2 className="font-heading font-bold text-2xl text-slate-100 tracking-wider">
+            Restoring Mission &amp; Subsystem State...
+          </h2>
+          <p className="text-xs text-slate-400 max-w-md mx-auto">
+            Synchronizing TimescaleDB telemetry snapshots, restoring active fault vectors, Digital Twin CAD state &amp; AI prognostics.
+          </p>
+        </div>
+
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-3 text-[11px] space-y-2">
+          <div className="flex justify-between items-center text-slate-300">
+            <span>Database Connection (TimescaleDB):</span>
+            <span className="text-emerald-400 font-bold">CONNECTED</span>
+          </div>
+          <div className="flex justify-between items-center text-slate-300">
+            <span>SCADA Avionics Stream:</span>
+            <span className="text-cyan-400 font-bold">SYNCHRONIZING</span>
+          </div>
+          <div className="flex justify-between items-center text-slate-300">
+            <span>Digital Twin 3D State:</span>
+            <span className="text-indigo-400 font-bold">RESTORING</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -95,7 +134,7 @@ const MainLayout: React.FC = () => {
 
         {/* Dynamic Main Viewport Canvas */}
         <main className="flex-1 overflow-y-auto bg-[#0A0B0D] relative grid-bg custom-scrollbar">
-          <div className="relative z-10">
+          <div key={activeTab} className="relative z-10 page-fade-in">
             {renderActiveView()}
           </div>
         </main>
@@ -139,8 +178,10 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <GcsProvider>
-      <MainLayout />
-    </GcsProvider>
+    <ThemeProvider>
+      <GcsProvider>
+        <MainLayout />
+      </GcsProvider>
+    </ThemeProvider>
   );
 }

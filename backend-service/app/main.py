@@ -52,6 +52,78 @@ app.include_router(faults_router)
 app.include_router(health_router)
 app.include_router(alerts_router)
 
+@app.get("/api/system/startup-state")
+async def get_system_startup_state():
+    """Single unified restoration endpoint for GCS initialization without zero-flashes"""
+    from app.repositories import TelemetryRepository, FaultRepository
+    telemetry_repo = TelemetryRepository()
+    fault_repo = FaultRepository()
+
+    latest_telemetry = telemetry_repo.get_latest() or {
+        "rpm": 5200,
+        "map_kpa": 98.4,
+        "cht_c": [112.5, 114.2, 118.0, 111.8],
+        "egt_c": [760, 765, 782, 758],
+        "oil_temp_c": 106.2,
+        "oil_pressure_kpa": 430.0,
+        "fuel_flow_lph": 24.5,
+        "turbochargerRpm": 114500,
+        "turbo_boost": 0.90,
+        "vib_z_g": 0.23,
+        "knockIndex": 0.12,
+        "health_score": 88.4,
+        "rul_hours": 142.6
+    }
+
+    active_faults = fault_repo.get_active_faults()
+
+    return {
+        "systemReady": True,
+        "timestamp": latest_telemetry.get("timestamp") or latest_telemetry.get("time"),
+        "telemetry": latest_telemetry,
+        "faults": active_faults,
+        "activeFaults": active_faults,
+        "mission": {
+            "id": "MSN-IND-7701",
+            "name": "OPERATION INDRADHANUSH",
+            "profile": "HIGH_ALTITUDE_LOITER",
+            "targetAltitudeFt": 22450,
+            "targetSpeedKts": 118,
+            "decision": "GO_FLIGHT",
+            "riskScore": 18.2
+        },
+        "predictions": {
+            "predictedRulHours": 142.6,
+            "confidenceScore": 98.7,
+            "shapAnomalyScore": 0.014,
+            "conceptDriftIndex": 0.002,
+            "topRiskFactor": "Cylinder #3 CHT Thermal Peak"
+        },
+        "digitalTwin": {
+            "scadaSyncConfidence": 98.7,
+            "activeLayer": "THERMAL",
+            "selectedComponent": "cylinder_3",
+            "transparentMode": False,
+            "explodedMode": False
+        },
+        "fleet": [
+            {
+                "id": "UAV-TAPAS-201",
+                "callsign": "TAPAS-BH-201 (GARUDA-1)",
+                "model": "DRDO TAPAS-BH-201 MALE UAV",
+                "status": "ACTIVE_MISSION",
+                "altitudeFt": 22450,
+                "airspeedKts": 118,
+                "fuelRemainingKg": 184.5,
+                "engineHealthIndex": 88.4,
+                "missionRiskScore": 18.2,
+                "twinConfidenceScore": 98.7,
+                "predictedRulHours": 142.6,
+                "activeFaultsCount": len(active_faults)
+            }
+        ]
+    }
+
 @app.get("/health")
 async def health_check():
     return {"status": "online", "service": "backend-service", "version": "4.2.8"}

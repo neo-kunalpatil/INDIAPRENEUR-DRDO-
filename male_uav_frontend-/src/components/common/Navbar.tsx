@@ -6,6 +6,7 @@ import {
   VolumeX, 
   Eye, 
   Moon, 
+  Sun,
   Maximize2, 
   Bell, 
   Sparkles, 
@@ -18,6 +19,7 @@ import {
   Compass
 } from 'lucide-react';
 import { useGcs } from '../../contexts/GcsContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { FACILITY_NAME } from '../../constants';
 
 interface NavbarProps {
@@ -26,6 +28,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
+  const { theme, toggleTheme } = useTheme();
   const { 
     uavFleet, 
     selectedUav, 
@@ -194,6 +197,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
             <span className="hidden sm:inline">JUDGE TOUR</span>
           </button>
 
+          {/* Global Dark Mode / Light Mode Theme Switcher */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-amber-500/60 bg-amber-950/40 text-amber-300 hover:bg-amber-900/60 hover:text-white transition-all font-mono-code font-bold text-xs shadow-lg shadow-amber-950/40"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-4 h-4 text-amber-400" />
+                <span>LIGHT MODE</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4 text-indigo-400" />
+                <span className="text-indigo-300">DARK MODE</span>
+              </>
+            )}
+          </button>
+
           {/* Quick Simulation Toggles */}
           <div className="flex items-center bg-[#15171A] border border-[#2A2D33] rounded p-0.5">
             <button
@@ -239,6 +261,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
           >
             {nightVisionMode ? <Moon className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
+
+
 
           {/* Tactical Copilot Chat Toggle */}
           <button

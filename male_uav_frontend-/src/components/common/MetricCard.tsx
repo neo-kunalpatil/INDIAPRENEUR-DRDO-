@@ -55,8 +55,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`p-3.5 rounded border transition-all relative overflow-hidden group panel-border ${getStatusBorder()} ${
-        onClick ? 'cursor-pointer' : ''
+      className={`p-3.5 rounded-2xl border transition-all duration-200 relative overflow-hidden group gcs-card ${getStatusBorder()} ${
+        onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''
       }`}
     >
       <div className="scan-line opacity-50" />

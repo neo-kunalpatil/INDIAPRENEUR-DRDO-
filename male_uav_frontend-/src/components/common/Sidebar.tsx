@@ -85,18 +85,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
       <button
         key={item.id}
         onClick={() => setActiveTab(item.id)}
-        className={`w-full flex items-center gap-3 px-2.5 py-2 rounded text-xs font-medium transition-all group relative ${
+        className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 group relative ${
           isChild ? 'pl-4' : ''
         } ${
           isActive
-            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+            ? 'bg-gradient-to-r from-blue-900/40 via-slate-900/80 to-slate-900/60 text-white border border-blue-500/50 shadow-md shadow-blue-950/40'
             : 'text-gray-400 hover:text-white hover:bg-[#15171A] border border-transparent'
         }`}
         title={isCollapsed ? item.label : undefined}
       >
-        {/* Active Indicator Bar */}
+        {/* Active Left Indicator Bar */}
         {isActive && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-blue-400 rounded-r" />
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-cyan-400 rounded-r shadow-[0_0_10px_rgba(34,211,238,0.9)]" />
         )}
 
         <div className={`transition-transform duration-200 ${isActive ? 'text-blue-400' : 'group-hover:text-blue-300'}`}>

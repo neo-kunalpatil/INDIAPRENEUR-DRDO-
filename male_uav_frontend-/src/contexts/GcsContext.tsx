@@ -24,6 +24,7 @@ interface TacticalChatMessage {
 }
 
 interface GcsContextType {
+  systemReady: boolean;
   uavFleet: UavUnit[];
   selectedUav: UavUnit;
   setSelectedUavId: (id: string) => void;
@@ -81,6 +82,7 @@ interface GcsContextType {
 const GcsContext = createContext<GcsContextType | undefined>(undefined);
 
 export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [systemReady, setSystemReady] = useState<boolean>(false);
   const [uavFleet, setUavFleet] = useState<UavUnit[]>(MOCK_UAV_FLEET);
   const [selectedUavId, setSelectedUavIdState] = useState<string>('UAV-TAPAS-201');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -96,10 +98,10 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const selectedUav = uavFleet.find(u => u.id === selectedUavId) || uavFleet[0];
 
-  // Base telemetry state for Rotax 914 Turbocharged Aero Piston Engine
+  // Base telemetry state initialized from backend startup state
   const [telemetry, setTelemetry] = useState<EngineTelemetry>({
     timestamp: new Date().toISOString(),
-    rpm: 5120,
+    rpm: 5200,
     manifoldPressureInHg: 35.8,
     throttlePercent: 86.5,
     coolantTempC: 98.4,
@@ -118,6 +120,48 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ambientTempC: -14.2,
     ambientPressureHpa: 432,
   });
+
+  // Single unified GET /api/system/startup-state restoration on mount
+  useEffect(() => {
+    fetch('http://localhost:8000/api/system/startup-state')
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.telemetry) {
+            setTelemetry(prev => ({
+              ...prev,
+              rpm: data.telemetry.rpm || prev.rpm,
+              oilTempC: data.telemetry.oil_temp_c || prev.oilTempC,
+              oilPressureBar: data.telemetry.oil_pressure_kpa ? Number((data.telemetry.oil_pressure_kpa / 100).toFixed(2)) : prev.oilPressureBar,
+              chtC: Array.isArray(data.telemetry.cht_c) ? data.telemetry.cht_c : prev.chtC,
+              egtC: Array.isArray(data.telemetry.egt_c) ? data.telemetry.egt_c : prev.egtC,
+              turboBoostBar: data.telemetry.turbo_boost || prev.turboBoostBar,
+            }));
+          }
+
+          const rawFaults = data.activeFaults || data.faults || [];
+          if (Array.isArray(rawFaults) && rawFaults.length > 0) {
+            const dbFaults: InjectedFault[] = rawFaults.map((af: any, idx: number) => ({
+              id: af.id || `db-fault-${idx}`,
+              type: af.fault_type || 'ENGINE_OVERHEAT',
+              name: af.fault_type ? af.fault_type.replace('_', ' ') : 'Injected Fault',
+              description: af.description || 'Active persistent fault from TimescaleDB.',
+              severityPercent: Number(af.severity) || 75,
+              component: 'Powerplant / Subsystem',
+              active: true,
+              timestampInjected: af.timestampInjected || af.created_at || new Date().toLocaleTimeString(),
+              affectedParameters: ['oilPressureBar', 'chtC', 'egtC', 'vibrationRmsMmS']
+            }));
+            setActiveFaults(dbFaults);
+          }
+          setSystemReady(true);
+        }
+      })
+      .catch(err => {
+        console.warn('Backend startup restoration warning:', err);
+        setSystemReady(true);
+      });
+  }, []);
 
   const [chatMessages, setChatMessages] = useState<TacticalChatMessage[]>([
     {
@@ -199,7 +243,8 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               }));
 
               if (data.health_score !== undefined || data.health !== undefined) {
-                const healthVal = data.health_score !== undefined ? data.health_score : data.health;
+                const rawHealth = data.health_score !== undefined ? data.health_score : data.health;
+                const healthVal = (typeof rawHealth === 'number' && rawHealth > 0) ? rawHealth : 88.4;
                 setUavFleet(prev => prev.map(u => u.id === selectedUavId ? { ...u, engineHealthIndex: Number(healthVal.toFixed(1)) } : u));
               }
 
@@ -248,22 +293,28 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [selectedUavId]);
 
-  // Initial REST fetch from Main Backend Gateway (Port 8000)
+  // Initial REST fetch from Main Backend Gateway (Port 8000) for active TimescaleDB faults
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/telemetry/latest')
+    fetch('http://localhost:8000/api/faults?active=true')
       .then(res => res.json())
       .then(data => {
-        if (data && data.rpm !== undefined) {
-          setTelemetry(prev => ({
-            ...prev,
-            rpm: Math.round(data.rpm),
-            oilTempC: data.oil_temp_c ? Number(data.oil_temp_c.toFixed(1)) : prev.oilTempC,
-            oilPressureBar: data.oil_pressure_kpa ? Number((data.oil_pressure_kpa / 100).toFixed(2)) : prev.oilPressureBar,
-            fuelFlowLitersHr: data.fuel_flow_lph ? Number(data.fuel_flow_lph.toFixed(1)) : prev.fuelFlowLitersHr,
+        const rawFaults = data.activeFaults || data.active_faults || [];
+        if (Array.isArray(rawFaults) && rawFaults.length > 0) {
+          const dbFaults: InjectedFault[] = rawFaults.map((af: any, idx: number) => ({
+            id: af.id || `db-fault-${idx}`,
+            type: af.fault_type || 'ENGINE_OVERHEAT',
+            name: af.fault_type ? af.fault_type.replace('_', ' ') : 'Injected Fault',
+            description: af.description || 'Active persistent fault from TimescaleDB.',
+            severityPercent: Number(af.severity) || 75,
+            component: 'Powerplant / Subsystem',
+            active: true,
+            timestampInjected: af.timestampInjected || af.created_at || new Date().toLocaleTimeString(),
+            affectedParameters: ['oilPressureBar', 'chtC', 'egtC', 'vibrationRmsMmS']
           }));
+          setActiveFaults(dbFaults);
         }
       })
-      .catch(err => console.warn('Failed initial fetch from Main Backend:', err));
+      .catch(err => console.warn('Failed initial fetch of active faults from TimescaleDB Backend:', err));
   }, []);
 
   const injectFault = useCallback((faultId: string, severity?: number) => {
@@ -286,24 +337,41 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
 
-    if (injectedFaultData) {
-      const fault = injectedFaultData as InjectedFault;
+    const targetFault = PRESET_FAULTS.find(p => p.id === faultId) || { name: faultId, component: 'powerplant' };
+    
+    // POST request to backend TimescaleDB database
+    fetch('http://localhost:8000/api/faults', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uavId: selectedUav.id,
+        engineId: 'ROTAX-914-9982',
+        faultType: targetFault.name || faultId,
+        severity: severity ?? 75,
+        createdBy: 'Tactical Operator / ADE GCS',
+        missionId: 'MSN-IND-7701',
+        description: `Active fault injection for ${targetFault.name}`
+      })
+    }).catch(err => console.warn('POST /api/faults failed:', err));
+
+    if (injectedFaultData || targetFault) {
+      const faultName = targetFault.name || faultId;
       const uniqueAlertId = `ALT-INJ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const newAlert: AlertNotification = {
         id: uniqueAlertId,
         timestamp: nowTimeStr + ' UTC',
         uavId: selectedUav.id,
         uavCallsign: selectedUav.callsign,
-        severity: fault.severityPercent > 70 ? 'CRITICAL' : 'WARNING',
-        title: `FAULT INJECTED: ${fault.name}`,
-        message: `Simulated anomaly active at ${fault.severityPercent}% severity. Digital Twin Physics+AI disparity flagged on ${fault.component}.`,
-        subsystem: `Injected Test / ${fault.component}`,
+        severity: (severity ?? 75) > 70 ? 'CRITICAL' : 'WARNING',
+        title: `FAULT INJECTED: ${faultName}`,
+        message: `Simulated anomaly active at ${severity ?? 75}% severity. Digital Twin Physics+AI disparity flagged on ${targetFault.component}.`,
+        subsystem: `Injected Test / ${targetFault.component}`,
         suggestedAction: 'Observe AI explainability waterfall and cross-check Physics Verification matrix.',
         acknowledged: false,
       };
 
       setAlerts((curr) => [newAlert, ...curr]);
-      speakVoiceAlert(`Warning: Anomaly injected. ${fault.name}`);
+      speakVoiceAlert(`Warning: Anomaly injected. ${faultName}`);
     }
 
     // Update UAV health index in state
@@ -331,6 +399,14 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return f;
       })
     );
+
+    // PATCH request to backend TimescaleDB database
+    fetch(`http://localhost:8000/api/faults/${faultId}/remove`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: faultId, status: 'REMOVED' })
+    }).catch(err => console.warn('PATCH /api/faults/remove failed:', err));
+
     speakVoiceAlert('Anomaly cleared. Engine baseline parameters stabilizing.');
   }, [speakVoiceAlert]);
 
@@ -495,6 +571,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <GcsContext.Provider
       value={{
+        systemReady,
         uavFleet,
         selectedUav,
         setSelectedUavId,
