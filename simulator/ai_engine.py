@@ -8,6 +8,11 @@ class AIEngine:
         self.telemetry_window: List[Dict[str, Any]] = []
         self.ws_manager = ws_manager
         self.running = False
+        self.ai_state = {
+            "aiStatus": "NORMAL",
+            "aiConfidence": 0.99,
+            "aiRec": "System operating nominally."
+        }
 
     async def start(self):
         self.running = True
@@ -27,21 +32,21 @@ class AIEngine:
         current = self.telemetry_window[-1]
 
         # 1. Feature Engineering
-        sum_temp = sum(b.get("oilTemp", b.get("oil_temp_c", 80)) for b in self.telemetry_window)
+        sum_temp = sum(b.get("oilTemp", 80) for b in self.telemetry_window)
         rolling_mean_oil = sum_temp / len(self.telemetry_window)
-        oil_temp_val = current.get("oilTemp", current.get("oil_temp_c", 80))
-        first_oil_temp = self.telemetry_window[0].get("oilTemp", self.telemetry_window[0].get("oil_temp_c", 80))
+        oil_temp_val = current.get("oilTemp", 80)
+        first_oil_temp = self.telemetry_window[0].get("oilTemp", 80)
         temp_gradient = oil_temp_val - first_oil_temp
 
-        egt_val = current.get("egt", current.get("egt_c", 600))
-        cht_val = current.get("cht", current.get("cht_c", 150))
+        egt_val = current.get("egt", 600)
+        cht_val = current.get("cht", 150)
         if isinstance(egt_val, list):
             egt_val = egt_val[0]
         if isinstance(cht_val, list):
             cht_val = cht_val[0]
 
         thermal_stress_index = (egt_val / 900.0) * 0.5 + (cht_val / 150.0) * 0.5
-        vib_z_val = current.get("vibZ", current.get("vib_z_g", 0.1))
+        vib_z_val = current.get("vibZ", 0.1)
 
         # 2. Anomaly Detection
         anomaly_score = 0.0
@@ -90,6 +95,10 @@ class AIEngine:
             "prediction": {"failure": predicted_failure, "probability": probability, "confidence": confidence, "horizon": "Next 30 minutes", "reason": reason},
             "maintenance": {"recommendation": recommendation, "priority": priority}
         }
+        
+        self.ai_state["aiStatus"] = "ANOMALY DETECTED" if anomaly_score > 0.5 else "NORMAL"
+        self.ai_state["aiConfidence"] = confidence
+        self.ai_state["aiRec"] = recommendation
 
         # Broadcast WebSocket
         await self.ws_manager.broadcast("ai:update", payload)
