@@ -15,6 +15,7 @@ from app.api.mission import router as mission_router
 from app.api.faults import router as faults_router
 from app.api.health import router as health_router
 from app.api.alerts import router as alerts_router
+from app.api.garuda import router as garuda_router
 
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO))
 logger = logging.getLogger("MainBackendService")
@@ -51,6 +52,7 @@ app.include_router(mission_router)
 app.include_router(faults_router)
 app.include_router(health_router)
 app.include_router(alerts_router)
+app.include_router(garuda_router)
 
 @app.get("/health")
 async def health_check():

@@ -21,6 +21,8 @@ import { MultiAgentAiPage } from './pages/MultiAgentAiPage';
 import { ContinuousLearningPage } from './pages/ContinuousLearningPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SystemHealthPage } from './pages/SystemHealthPage';
+import { GarudaAIPage } from './pages/GarudaAIPage';
+import { GarudaFloatingBadge } from './components/GarudaFloatingBadge';
 
 const MainLayout: React.FC = () => {
   const { activeTab, nightVisionMode, startDemoTour } = useGcs();
@@ -76,6 +78,8 @@ const MainLayout: React.FC = () => {
         return <ReportsPage />;
       case 'system-health':
         return <SystemHealthPage />;
+      case 'garuda-ai':
+        return <GarudaAIPage />;
       default:
         return <DashboardPage />;
     }
@@ -133,6 +137,9 @@ const MainLayout: React.FC = () => {
 
       {/* Judge Guided Presentation & Evaluation Tour Modal */}
       <DemoTourModal />
+
+      {/* Persistent Global Mission Intelligence Floating Badge */}
+      <GarudaFloatingBadge />
     </div>
   );
 };
