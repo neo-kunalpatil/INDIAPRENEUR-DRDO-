@@ -80,4 +80,10 @@ class SimulatorClient:
     async def post_fft(self, data: Dict[str, Any]) -> Dict[str, Any]:
         return await self._post("/api/fft", data)
 
+    async def inject_fault(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._post("/api/faults/inject", data)
+
+    async def clear_fault(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._post("/api/faults/clear", data)
+
 simulator_client = SimulatorClient()

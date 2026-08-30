@@ -105,8 +105,8 @@ class EnginePhysics:
         elif severity_str == "HIGH": sev_mult = 1.8
         elif severity_str == "CRITICAL": sev_mult = 2.8
 
-        if fault_name in self.faults:
-            self.faults[fault_name] = {"active": active, "sev": sev_mult}
+        # Assign active status to target fault (dynamically registering if not present)
+        self.faults[fault_name] = {"active": active, "sev": sev_mult}
 
         # Handle mapped aliases
         alias_map = {

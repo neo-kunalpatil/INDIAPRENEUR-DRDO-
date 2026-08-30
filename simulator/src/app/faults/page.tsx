@@ -31,7 +31,7 @@ export default function FaultsPage() {
           const newFault = {id: Math.random().toString(), type: fType, severity: fSev, intensity: 0.01, timeAlive: 0};
           faultStore.addFault(newFault);
           try {
-            await fetch(ENDPOINTS.faults, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: fType, active: true}) });
+            await fetch(ENDPOINTS.faults, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: fType, severity: fSev, active: true}) });
           } catch(e) {}
         }} className="bg-red-900 text-white px-4">INJECT</button>
       </div>

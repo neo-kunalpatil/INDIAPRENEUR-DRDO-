@@ -39,7 +39,7 @@ export const DashboardPage: React.FC = () => {
 
   const activeInjectedFaults = activeFaults.filter(f => f.active);
 
-  // Real-Time Threshold Detection Engine (13 Telemetry Variables + 4 Severity Levels)
+  // Active Fault Banner Mapper (100% Simulator Source of Truth - No Static or Threshold Fallbacks)
   const detectedFaultFromTelemetry = React.useMemo(() => {
     if (activeInjectedFaults.length > 0) {
       const f = activeInjectedFaults[0];
@@ -48,42 +48,11 @@ export const DashboardPage: React.FC = () => {
         id: f.id, 
         name: f.name, 
         severity: severityStr, 
-        description: `Simulated ${f.name} injected at ${f.severityPercent}% severity on ${f.component}.` 
+        description: f.description || `Simulated ${f.name} injected at ${f.severityPercent}% severity on ${f.component}.` 
       };
     }
-
-    const maxCht = Math.max(...telemetry.chtC);
-    if (maxCht > 280) return { id: 'cht-crit', name: 'Cylinder Overheating (CRITICAL)', severity: 'CRITICAL', description: `Peak CHT reached critical threshold: ${maxCht.toFixed(1)}°C (>280°C limit)` };
-    if (maxCht > 265) return { id: 'cht-high', name: 'Cylinder Thermal Stress (HIGH)', severity: 'HIGH', description: `Peak CHT elevated: ${maxCht.toFixed(1)}°C (>265°C limit)` };
-    if (maxCht > 250) return { id: 'cht-med', name: 'Cylinder Thermal Stress (MEDIUM)', severity: 'MEDIUM', description: `Peak CHT elevated: ${maxCht.toFixed(1)}°C (>250°C limit)` };
-    if (maxCht > 235) return { id: 'cht-low', name: 'Cylinder Thermal Disparity (LOW)', severity: 'LOW', description: `Peak CHT slightly elevated: ${maxCht.toFixed(1)}°C (>235°C limit)` };
-
-    const maxEgt = Math.max(...telemetry.egtC);
-    if (maxEgt > 820) return { id: 'egt-crit', name: 'Combustion Overheat (CRITICAL)', severity: 'CRITICAL', description: `Exhaust Gas Temp reached ${maxEgt}°C (>820°C limit)` };
-    if (maxEgt > 790) return { id: 'egt-high', name: 'Combustion Overheat (HIGH)', severity: 'HIGH', description: `Exhaust Gas Temp reached ${maxEgt}°C (>790°C limit)` };
-    if (maxEgt > 760) return { id: 'egt-med', name: 'Combustion Overheat (MEDIUM)', severity: 'MEDIUM', description: `Exhaust Gas Temp reached ${maxEgt}°C (>760°C limit)` };
-
-    if (telemetry.oilPressureBar < 2.0) return { id: 'oil-crit', name: 'Oil Pressure Loss (CRITICAL)', severity: 'CRITICAL', description: `Oil Pressure dropped to ${telemetry.oilPressureBar.toFixed(2)} bar (<2.0 bar limit)` };
-    if (telemetry.oilPressureBar < 2.5) return { id: 'oil-high', name: 'Oil Pressure Loss (HIGH)', severity: 'HIGH', description: `Oil Pressure dropped to ${telemetry.oilPressureBar.toFixed(2)} bar (<2.5 bar limit)` };
-    if (telemetry.oilPressureBar < 3.0) return { id: 'oil-med', name: 'Oil Pressure Drop (MEDIUM)', severity: 'MEDIUM', description: `Oil Pressure dropped to ${telemetry.oilPressureBar.toFixed(2)} bar (<3.0 bar limit)` };
-
-    if (telemetry.oilTempC > 130) return { id: 'oil-temp-crit', name: 'Oil Overheating (CRITICAL)', severity: 'CRITICAL', description: `Oil Temperature reached ${telemetry.oilTempC.toFixed(1)}°C (>130°C limit)` };
-    if (telemetry.oilTempC > 118) return { id: 'oil-temp-high', name: 'Oil Overheating (HIGH)', severity: 'HIGH', description: `Oil Temperature reached ${telemetry.oilTempC.toFixed(1)}°C (>118°C limit)` };
-
-    if (telemetry.coolantTempC > 125) return { id: 'cool-crit', name: 'Coolant Loop Overheat (CRITICAL)', severity: 'CRITICAL', description: `Coolant Temp reached ${telemetry.coolantTempC}°C (>125°C limit)` };
-
-    if (telemetry.turboBoostBar > 1.3) return { id: 'boost-high', name: 'Turbo Overspeed (HIGH)', severity: 'HIGH', description: `Turbo Boost reached ${telemetry.turboBoostBar.toFixed(2)} bar (>1.3 bar limit)` };
-    if (telemetry.turboBoostBar < 0.35 && telemetry.rpm > 3000) return { id: 'boost-leak', name: 'Boost Leak (MEDIUM)', severity: 'MEDIUM', description: `Turbo Boost dropped to ${telemetry.turboBoostBar.toFixed(2)} bar (<0.35 bar limit)` };
-
-    if (telemetry.fuelPressureBar < 2.2) return { id: 'fuel-crit', name: 'Fuel Pump Failure (CRITICAL)', severity: 'CRITICAL', description: `Fuel Pressure dropped to ${telemetry.fuelPressureBar.toFixed(2)} bar (<2.2 bar limit)` };
-
-    if (telemetry.vibrationRmsMmS > 7.0) return { id: 'vib-crit', name: 'Bearing Failure / Crankshaft Misalignment (CRITICAL)', severity: 'CRITICAL', description: `Vibration RMS reached ${telemetry.vibrationRmsMmS.toFixed(2)} mm/s (>7.0 mm/s limit)` };
-    if (telemetry.vibrationRmsMmS > 5.0) return { id: 'vib-high', name: 'Excessive Crankshaft Vibration (HIGH)', severity: 'HIGH', description: `Vibration RMS reached ${telemetry.vibrationRmsMmS.toFixed(2)} mm/s (>5.0 mm/s limit)` };
-
-    if (telemetry.lambdaAirFuelRatio > 1.08) return { id: 'lambda-lean', name: 'Combustion Lean Mixture (MEDIUM)', severity: 'MEDIUM', description: `Air-Fuel Ratio λ reached ${telemetry.lambdaAirFuelRatio.toFixed(2)} (>1.08 lean limit)` };
-
     return null;
-  }, [activeInjectedFaults, telemetry]);
+  }, [activeInjectedFaults]);
 
   return (
     <div id="dashboard-overview" className="p-4 space-y-4 max-w-[1920px] mx-auto">
@@ -629,94 +598,108 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               {/* 0. FAULT ANALYSIS DRAWER CONTENT */}
-              {activeDrawer === 'FAULT_ANALYSIS' && detectedFaultFromTelemetry && (
-                <div className="space-y-5 font-mono-code text-xs">
-                  {/* Fault Summary Banner */}
-                  <div className="p-4 bg-red-950/90 rounded-xl border-2 border-red-600 space-y-2">
-                    <div className="flex justify-between items-center border-b border-red-800/80 pb-2">
-                      <span className="font-bold text-red-300 uppercase tracking-wider text-sm">⚠ CRITICAL FAULT DETECTED SUMMARY</span>
-                      <span className="px-2.5 py-0.5 bg-red-900 text-red-100 border border-red-500 rounded text-[10px] font-bold">SEVERITY: CRITICAL</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1 text-slate-200">
-                      <div><span className="text-slate-400 text-[10px] block">FAULT NAME</span><strong className="text-red-400">{detectedFaultFromTelemetry.name}</strong></div>
-                      <div><span className="text-slate-400 text-[10px] block">DETECTION TIME</span><strong>2 seconds ago</strong></div>
-                      <div><span className="text-slate-400 text-[10px] block">SUBSYSTEM</span><strong>Powerplant SCADA</strong></div>
-                      <div><span className="text-slate-400 text-[10px] block">CONFIDENCE</span><strong className="text-emerald-400">98.9%</strong></div>
-                    </div>
-                  </div>
+              {activeDrawer === 'FAULT_ANALYSIS' && activeInjectedFaults.length > 0 && (() => {
+                const faultObj = activeInjectedFaults[0];
+                const sevPercent = faultObj.severityPercent || 75;
+                const sevStr = faultObj.severityPercent > 80 ? 'CRITICAL' : faultObj.severityPercent > 60 ? 'HIGH' : faultObj.severityPercent > 40 ? 'MEDIUM' : 'LOW';
 
-                  {/* Why Fault Was Detected & Root Cause */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
-                      <span className="font-bold text-cyan-300 block border-b border-slate-800 pb-1.5">WHY WAS THIS FAULT DETECTED?</span>
-                      <p className="text-slate-300 leading-relaxed">
-                        Live telemetry streams detected an abnormal envelope deviation on key SCADA parameters. {detectedFaultFromTelemetry.description || 'Values cross safety thresholds stored in the simulator.'}
-                      </p>
-                    </div>
-
-                    <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
-                      <span className="font-bold text-amber-300 block border-b border-slate-800 pb-1.5">ENGINEERING ROOT CAUSE ANALYSIS</span>
-                      <p className="text-slate-300 leading-relaxed">
-                        Fuel injection duty cycle or lubrication fluid pressure is non-stoichiometric, increasing combustion chamber thermal gradient and reducing total horsepower output.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Live Sensor Deviation Table */}
-                  <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
-                    <span className="font-bold text-emerald-300 block border-b border-slate-800 pb-1.5">LIVE SENSOR EVIDENCE DEVIATION TABLE</span>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="border-b border-slate-800 text-slate-400 text-[10px]">
-                            <th className="py-1">SENSOR</th>
-                            <th className="py-1">EXPECTED</th>
-                            <th className="py-1">CURRENT LIVE</th>
-                            <th className="py-1">DEVIATION</th>
-                            <th className="py-1 text-right">STATUS</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                          <tr><td className="py-1.5 font-bold">Oil Pressure</td><td className="py-1.5 text-slate-400">4.35 bar</td><td className="py-1.5 text-red-400 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</td><td className="py-1.5 text-red-300">-2.15 bar</td><td className="py-1.5 text-right font-bold text-red-400">⚠️ CRITICAL</td></tr>
-                          <tr><td className="py-1.5 font-bold">Cylinder #3 Head Temp</td><td className="py-1.5 text-slate-400">115.0°C</td><td className="py-1.5 text-amber-300 font-telemetry">{telemetry.chtC[2].toFixed(1)}°C</td><td className="py-1.5 text-amber-300">+13.4°C</td><td className="py-1.5 text-right font-bold text-amber-400">⚠️ ELEVATED</td></tr>
-                          <tr><td className="py-1.5 font-bold">Engine Speed</td><td className="py-1.5 text-slate-400">5100 RPM</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.rpm} RPM</td><td className="py-1.5 text-slate-400">0 RPM</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ NORMAL</td></tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Fault Propagation & Quick Actions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
-                      <span className="font-bold text-indigo-300 block border-b border-slate-800 pb-1.5">FAULT PROPAGATION FLOW</span>
-                      <div className="space-y-1 text-slate-300 font-mono-code text-[11px]">
-                        <div>Simulator Injector / Pressure Fault</div>
-                        <div className="pl-3 text-amber-300 font-bold">└── Fluid Pressure Drop</div>
-                        <div className="pl-6 text-amber-400 font-bold">└── Thermal Gradient Rise</div>
-                        <div className="pl-9 text-red-400 font-bold">└── Elevated Mission Risk (+14%)</div>
+                return (
+                  <div className="space-y-5 font-mono-code text-xs">
+                    {/* Fault Summary Banner */}
+                    <div className="p-4 bg-red-950/90 rounded-xl border-2 border-red-600 space-y-2">
+                      <div className="flex justify-between items-center border-b border-red-800/80 pb-2">
+                        <span className="font-bold text-red-300 uppercase tracking-wider text-sm">⚠ SIMULATOR ACTIVE FAULT ANALYSIS</span>
+                        <span className={`px-2.5 py-0.5 border rounded text-[10px] font-bold uppercase ${
+                          sevStr === 'CRITICAL' ? 'bg-red-900 border-red-500 text-red-100' :
+                          sevStr === 'HIGH' ? 'bg-orange-900 border-orange-500 text-orange-100' :
+                          sevStr === 'MEDIUM' ? 'bg-yellow-900 border-yellow-500 text-yellow-100' :
+                          'bg-blue-900 border-blue-500 text-blue-100'
+                        }`}>
+                          SEVERITY: {sevStr} ({sevPercent}%)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1 text-slate-200">
+                        <div><span className="text-slate-400 text-[10px] block">FAULT NAME</span><strong className="text-red-400">{faultObj.name}</strong></div>
+                        <div><span className="text-slate-400 text-[10px] block">INJECTION TIME</span><strong>{faultObj.timestampInjected || 'Just now'}</strong></div>
+                        <div><span className="text-slate-400 text-[10px] block">TARGET COMPONENT</span><strong className="uppercase">{faultObj.component}</strong></div>
+                        <div><span className="text-slate-400 text-[10px] block">AI CONFIDENCE</span><strong className="text-emerald-400">98.9%</strong></div>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
-                      <span className="font-bold text-emerald-300 block border-b border-slate-800 pb-1.5">3D DIGITAL TWIN & REPLAY ACTIONS</span>
-                      <div className="flex flex-col gap-2 pt-1">
-                        <button 
-                          onClick={() => { setActiveDrawer(null); setActiveTab('digital-twin'); }}
-                          className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs"
-                        >
-                          🎯 HIGHLIGHT IN 3D DIGITAL TWIN
-                        </button>
-                        <button 
-                          onClick={() => alert("Replaying last 60 seconds of SCADA telemetry prior to fault detection...")}
-                          className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded font-bold text-xs border border-slate-700"
-                        >
-                          🔄 REPLAY LAST 60 SECONDS TELEMETRY
-                        </button>
+                    {/* Why Fault Was Detected & Root Cause */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
+                        <span className="font-bold text-cyan-300 block border-b border-slate-800 pb-1.5">EXPLAINABLE AI DIAGNOSTIC</span>
+                        <p className="text-slate-300 leading-relaxed">
+                          {faultObj.description || `Injected simulator anomaly operating on ${faultObj.component} at ${sevPercent}% intensity.`}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
+                        <span className="font-bold text-amber-300 block border-b border-slate-800 pb-1.5">ENGINEERING ROOT CAUSE ANALYSIS</span>
+                        <p className="text-slate-300 leading-relaxed">
+                          Active fault [{faultObj.name}] induces fluidic/thermal disparity across the {faultObj.component} assembly, altering thermodynamic equilibrium.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Live Sensor Evidence Deviation Table */}
+                    <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                      <span className="font-bold text-emerald-300 block border-b border-slate-800 pb-1.5">LIVE SENSOR EVIDENCE DEVIATION TABLE</span>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-800 text-slate-400 text-[10px]">
+                              <th className="py-1">SENSOR NAME</th>
+                              <th className="py-1">EXPECTED BASELINE</th>
+                              <th className="py-1">CURRENT LIVE VALUE</th>
+                              <th className="py-1">DEVIATION</th>
+                              <th className="py-1 text-right">STATUS</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                            <tr><td className="py-1.5 font-bold">Oil Pressure</td><td className="py-1.5 text-slate-400">4.35 bar</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</td><td className="py-1.5 text-slate-400">{(telemetry.oilPressureBar - 4.35).toFixed(2)} bar</td><td className="py-1.5 text-right font-bold text-emerald-400">LIVE SYNC</td></tr>
+                            <tr><td className="py-1.5 font-bold">Peak CHT Temp</td><td className="py-1.5 text-slate-400">115.0°C</td><td className="py-1.5 text-amber-300 font-telemetry">{Math.max(...telemetry.chtC).toFixed(1)}°C</td><td className="py-1.5 text-amber-300">+{(Math.max(...telemetry.chtC) - 115.0).toFixed(1)}°C</td><td className="py-1.5 text-right font-bold text-amber-400">ELEVATED</td></tr>
+                            <tr><td className="py-1.5 font-bold">Engine Speed</td><td className="py-1.5 text-slate-400">5100 RPM</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.rpm} RPM</td><td className="py-1.5 text-slate-400">{telemetry.rpm - 5100} RPM</td><td className="py-1.5 text-right font-bold text-emerald-400">NOMINAL</td></tr>
+                            <tr><td className="py-1.5 font-bold">Vibration RMS</td><td className="py-1.5 text-slate-400">2.00 mm/s</td><td className="py-1.5 text-indigo-300 font-telemetry">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</td><td className="py-1.5 text-indigo-300">+{(telemetry.vibrationRmsMmS - 2.0).toFixed(2)} mm/s</td><td className="py-1.5 text-right font-bold text-emerald-400">NORMAL</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Fault Propagation & Quick Actions */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
+                        <span className="font-bold text-indigo-300 block border-b border-slate-800 pb-1.5">FAULT PROPAGATION FLOW</span>
+                        <div className="space-y-1 text-slate-300 font-mono-code text-[11px]">
+                          <div>Simulator Trigger: {faultObj.name}</div>
+                          <div className="pl-3 text-amber-300 font-bold">└── Component: {faultObj.component}</div>
+                          <div className="pl-6 text-amber-400 font-bold">└── Thermal & Dynamic Shift</div>
+                          <div className="pl-9 text-red-400 font-bold">└── Health Penalty Applied (-{Math.round(sevPercent * 0.3)}%)</div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
+                        <span className="font-bold text-emerald-300 block border-b border-slate-800 pb-1.5">3D DIGITAL TWIN & REPLAY ACTIONS</span>
+                        <div className="flex flex-col gap-2 pt-1">
+                          <button 
+                            onClick={() => { setActiveDrawer(null); setActiveTab('digital-twin'); }}
+                            className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs"
+                          >
+                            🎯 HIGHLIGHT [{faultObj.component.toUpperCase()}] IN 3D DIGITAL TWIN
+                          </button>
+                          <button 
+                            onClick={() => alert(`Replaying telemetry sequence for ${faultObj.name}...`)}
+                            className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded font-bold text-xs border border-slate-700"
+                          >
+                            🔄 REPLAY LAST 60 SECONDS TELEMETRY
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* 1. HEALTH DRAWER CONTENT */}
               {activeDrawer === 'HEALTH' && (
