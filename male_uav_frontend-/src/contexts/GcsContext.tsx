@@ -157,64 +157,95 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [uavFleet, speakVoiceAlert]);
 
-  // Live telemetry pulse simulation with realistic noise & fault injection responsiveness
+  // Persistent WebSocket Stream Integration with Main Backend Gateway (Port 8000)
   useEffect(() => {
-    if (!isSimulationRunning) return;
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: any = null;
 
-    const interval = setInterval(() => {
-      setTelemetry((prev) => {
-        const noise = (Math.random() - 0.5);
-        const hasTurboFault = activeFaults.some(f => f.type === 'TURBO_WASTEGATE_STUCK' && f.active);
-        const hasInjectorFault = activeFaults.some(f => f.type === 'INJECTOR_3_CLOGGED' && f.active);
-        const hasOilFault = activeFaults.some(f => f.type === 'OIL_PUMP_CAVITATION' && f.active);
-        const hasKnockFault = activeFaults.some(f => f.type === 'CYLINDER_2_PREIGNITION' && f.active);
+    const connectWS = () => {
+      try {
+        ws = new WebSocket('ws://localhost:8000/stream');
 
-        // Adjust telemetry based on faults
-        const targetRpm = hasTurboFault ? 4850 + noise * 60 : 5120 + noise * 25;
-        const targetMap = hasTurboFault ? 29.4 + noise * 0.8 : 35.8 + noise * 0.2;
-        const targetBoost = hasTurboFault ? 0.48 + noise * 0.05 : 0.88 + noise * 0.02;
-
-        const cyl1Cht = 112.5 + noise * 0.8;
-        const cyl2Cht = (hasKnockFault ? 134.8 : 114.2) + noise * 0.8;
-        const cyl3Cht = (hasInjectorFault ? 128.4 : 111.8) + noise * 0.9;
-        const cyl4Cht = 113.4 + noise * 0.8;
-
-        const cyl1Egt = 765 + noise * 3;
-        const cyl2Egt = 772 + noise * 3;
-        const cyl3Egt = (hasInjectorFault ? 848 : 760) + noise * 4;
-        const cyl4Egt = 768 + noise * 3;
-
-        const oilPres = hasOilFault ? 2.15 + Math.sin(Date.now() / 1000) * 0.4 : 4.35 + noise * 0.05;
-        const oilTemp = hasOilFault ? 119.5 + noise * 0.4 : 106.2 + noise * 0.2;
-        const vibRms = (hasKnockFault || hasInjectorFault || hasOilFault) ? 5.8 + noise * 0.4 : 2.35 + noise * 0.15;
-        const knock = hasKnockFault ? 0.74 + noise * 0.08 : 0.08 + Math.abs(noise * 0.02);
-
-        return {
-          timestamp: new Date().toISOString(),
-          rpm: Math.round(targetRpm),
-          manifoldPressureInHg: Number(targetMap.toFixed(1)),
-          throttlePercent: prev.throttlePercent,
-          coolantTempC: Number((98.4 + noise * 0.4).toFixed(1)),
-          oilTempC: Number(oilTemp.toFixed(1)),
-          oilPressureBar: Number(oilPres.toFixed(2)),
-          fuelPressureBar: Number((2.85 + noise * 0.03).toFixed(2)),
-          fuelFlowLitersHr: Number((24.6 + noise * 0.3).toFixed(1)),
-          chtC: [Number(cyl1Cht.toFixed(1)), Number(cyl2Cht.toFixed(1)), Number(cyl3Cht.toFixed(1)), Number(cyl4Cht.toFixed(1))],
-          egtC: [Math.round(cyl1Egt), Math.round(cyl2Egt), Math.round(cyl3Egt), Math.round(cyl4Egt)],
-          turbochargerRpm: Math.round(hasTurboFault ? 88000 + noise * 1200 : 114500 + noise * 600),
-          turboBoostBar: Number(targetBoost.toFixed(2)),
-          vibrationRmsMmS: Number(vibRms.toFixed(2)),
-          vibrationFftPeakHz: Number((85.3 + (hasInjectorFault ? 42.1 : 0) + noise * 1.5).toFixed(1)),
-          knockIndex: Number(Math.min(1.0, Math.max(0, knock)).toFixed(2)),
-          lambdaAirFuelRatio: Number((hasInjectorFault ? 1.14 : 0.98 + noise * 0.01).toFixed(2)),
-          ambientTempC: prev.ambientTempC,
-          ambientPressureHpa: prev.ambientPressureHpa,
+        ws.onopen = () => {
+          console.log('[Main Dashboard] Connected to Main Backend Gateway (ws://localhost:8000/stream)');
         };
-      });
-    }, 1500);
 
-    return () => clearInterval(interval);
-  }, [isSimulationRunning, activeFaults]);
+        ws.onmessage = (event) => {
+          try {
+            const rawData = JSON.parse(event.data);
+            const data = rawData.payload || rawData.data || rawData;
+
+            if (data) {
+              setTelemetry((prev) => ({
+                ...prev,
+                timestamp: data.timestamp ? new Date(data.timestamp).toISOString() : new Date().toISOString(),
+                rpm: data.rpm !== undefined ? Math.round(data.rpm) : prev.rpm,
+                throttlePercent: data.throttle_pct !== undefined ? data.throttle_pct : (data.throttle !== undefined ? data.throttle : prev.throttlePercent),
+                manifoldPressureInHg: data.map_kpa !== undefined ? Number((data.map_kpa * 0.2953).toFixed(1)) : (data.map !== undefined ? data.map : prev.manifoldPressureInHg),
+                coolantTempC: data.coolantTempC !== undefined ? data.coolantTempC : prev.coolantTempC,
+                oilTempC: data.oil_temp_c !== undefined ? Number(data.oil_temp_c.toFixed(1)) : (data.oilTemp !== undefined ? data.oilTemp : prev.oilTempC),
+                oilPressureBar: data.oil_pressure_kpa !== undefined ? Number((data.oil_pressure_kpa / 100).toFixed(2)) : (data.oilPressure !== undefined ? data.oilPressure : prev.oilPressureBar),
+                fuelPressureBar: data.fuel_pressure_kpa !== undefined ? Number((data.fuel_pressure_kpa / 100).toFixed(2)) : prev.fuelPressureBar,
+                fuelFlowLitersHr: data.fuel_flow_lph !== undefined ? Number(data.fuel_flow_lph.toFixed(1)) : (data.fuelFlow !== undefined ? data.fuelFlow : prev.fuelFlowLitersHr),
+                chtC: Array.isArray(data.cht_c) ? data.cht_c : (typeof data.cht_c === 'number' ? [data.cht_c, data.cht_c + 1.2, data.cht_c - 0.8, data.cht_c + 0.5] : prev.chtC),
+                egtC: Array.isArray(data.egt_c) ? data.egt_c : (typeof data.egt_c === 'number' ? [Math.round(data.egt_c), Math.round(data.egt_c + 5), Math.round(data.egt_c - 4), Math.round(data.egt_c + 3)] : prev.egtC),
+                turbochargerRpm: data.turbochargerRpm !== undefined ? data.turbochargerRpm : prev.turbochargerRpm,
+                turboBoostBar: data.turbo_boost !== undefined ? Number(data.turbo_boost.toFixed(2)) : prev.turboBoostBar,
+                vibrationRmsMmS: data.vib_z_g !== undefined ? Number((data.vib_z_g * 10).toFixed(2)) : prev.vibrationRmsMmS,
+                vibrationFftPeakHz: data.vibrationFftPeakHz !== undefined ? data.vibrationFftPeakHz : prev.vibrationFftPeakHz,
+                knockIndex: data.knockIndex !== undefined ? data.knockIndex : prev.knockIndex,
+                lambdaAirFuelRatio: data.lambda !== undefined ? Number(data.lambda.toFixed(2)) : prev.lambdaAirFuelRatio,
+                ambientTempC: data.ambientTempC !== undefined ? data.ambientTempC : prev.ambientTempC,
+                ambientPressureHpa: data.ambientPressureHpa !== undefined ? data.ambientPressureHpa : prev.ambientPressureHpa,
+              }));
+
+              if (data.health_score !== undefined || data.health !== undefined) {
+                const healthVal = data.health_score !== undefined ? data.health_score : data.health;
+                setUavFleet(prev => prev.map(u => u.id === selectedUavId ? { ...u, engineHealthIndex: Number(healthVal.toFixed(1)) } : u));
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing backend WS message:', e);
+          }
+        };
+
+        ws.onclose = () => {
+          reconnectTimeout = setTimeout(connectWS, 2000);
+        };
+
+        ws.onerror = (err) => {
+          ws?.close();
+        };
+      } catch (err) {
+        reconnectTimeout = setTimeout(connectWS, 2000);
+      }
+    };
+
+    connectWS();
+
+    return () => {
+      if (ws) ws.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+    };
+  }, [selectedUavId]);
+
+  // Initial REST fetch from Main Backend Gateway (Port 8000)
+  useEffect(() => {
+    fetch('http://localhost:8000/api/v1/telemetry/latest')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.rpm !== undefined) {
+          setTelemetry(prev => ({
+            ...prev,
+            rpm: Math.round(data.rpm),
+            oilTempC: data.oil_temp_c ? Number(data.oil_temp_c.toFixed(1)) : prev.oilTempC,
+            oilPressureBar: data.oil_pressure_kpa ? Number((data.oil_pressure_kpa / 100).toFixed(2)) : prev.oilPressureBar,
+            fuelFlowLitersHr: data.fuel_flow_lph ? Number(data.fuel_flow_lph.toFixed(1)) : prev.fuelFlowLitersHr,
+          }));
+        }
+      })
+      .catch(err => console.warn('Failed initial fetch from Main Backend:', err));
+  }, []);
 
   const injectFault = useCallback((faultId: string, severity?: number) => {
     let injectedFaultData: InjectedFault | undefined;
