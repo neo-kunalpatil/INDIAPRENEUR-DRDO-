@@ -240,6 +240,10 @@ export const AIPredictionsPage: React.FC = () => {
     },
   ];
 
+  const [showReportConfig, setShowReportConfig] = useState<boolean>(false);
+  const [reportTitle, setReportTitle] = useState<string>('DRDO DEFENCE AI ENGINE DIAGNOSTICS & PROGNOSTICS REPORT');
+  const [reportType, setReportType] = useState<string>('COMPLETE');
+
   return (
     <div id="rul-matrix" className="p-4 space-y-4 max-w-[1920px] mx-auto font-mono-code text-xs">
       {/* Header */}
@@ -247,32 +251,41 @@ export const AIPredictionsPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="font-heading font-bold text-xl text-slate-100">
-              AI Prediction Center &amp; Item-Level Analytical Investigation Center
+              AI Prediction Center &amp; Defense AI Intelligence Console
             </h1>
             <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-mono-code font-bold">
-              ITEM-LEVEL DRILLDOWN ACTIVE
+              REPORT GENERATOR ACTIVE
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Click any individual metric, SHAP feature bar, probability row, or physics value to open an item-specific investigation console
+            Real-time physical SCADA recalculations • Click any metric to investigate or generate defence-grade engineering PDF reports
           </p>
         </div>
 
-        {/* Mission Profile Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono-code">
-          {(['HIGH_ALTITUDE', 'HOT_DESERT', 'SEA_LEVEL', 'COMBAT_HIGH_G'] as const).map((prof) => (
-            <button
-              key={prof}
-              onClick={() => setSelectedProfile(prof)}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
-                selectedProfile === prof
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {prof.replace(/_/g, ' ')}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowReportConfig(true)}
+            className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl font-bold shadow-lg shadow-cyan-950/40 border border-indigo-400/50 flex items-center gap-2 transition-all hover:scale-105"
+          >
+            <span>📄 GENERATE ENGINEERING REPORT</span>
+          </button>
+
+          {/* Mission Profile Switcher */}
+          <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono-code">
+            {(['HIGH_ALTITUDE', 'HOT_DESERT', 'SEA_LEVEL', 'COMBAT_HIGH_G'] as const).map((prof) => (
+              <button
+                key={prof}
+                onClick={() => setSelectedProfile(prof)}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
+                  selectedProfile === prof
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {prof.replace(/_/g, ' ')}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -870,6 +883,179 @@ export const AIPredictionsPage: React.FC = () => {
               >
                 RETURN TO PREDICTION CENTER
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DRDO AI Interactive PDF Engineering Report Generator Modal */}
+      {showReportConfig && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 transition-opacity">
+          <div className="w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto font-mono-code text-xs">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-950 border border-indigo-800 rounded-lg">
+                  <BrainCircuit className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                  <h2 className="font-heading font-bold text-lg text-slate-100 uppercase tracking-wider">
+                    DRDO Interactive Defence Engineering Report Generator
+                  </h2>
+                  <p className="text-xs text-slate-400">Generate Live Engineering PDF Reports from 20 Hz Physical SCADA &amp; AI Digital Twin</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowReportConfig(false)}
+                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-slate-300 font-bold"
+              >
+                ✕ CLOSE
+              </button>
+            </div>
+
+            {/* Report Setup Controls */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+              <div>
+                <label className="text-slate-400 block text-[10px] uppercase font-bold mb-1">REPORT TITLE / DOCUMENT NAME</label>
+                <input 
+                  type="text" 
+                  value={reportTitle}
+                  onChange={(e) => setReportTitle(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono-code"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block text-[10px] uppercase font-bold mb-1">REPORT ARCHITECTURE SCOPE</label>
+                <select 
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono-code"
+                >
+                  <option value="COMPLETE">COMPLETE DEFENCE ENGINEERING REPORT (ALL SECTIONS)</option>
+                  <option value="AI_PROGNOSTICS">AI PREDICTION &amp; DEEP-SURVIVAL RUL REPORT</option>
+                  <option value="EXPLAINABLE_SHAP">EXPLAINABLE AI (XAI) &amp; SHAP ATTRIBUTION REPORT</option>
+                  <option value="PHYSICS_TWIN">PHYSICS DIGITAL TWIN CONVERGENCE REPORT</option>
+                  <option value="MAINTENANCE_ADVISOR">PREDICTIVE MAINTENANCE &amp; ACTION PLAN REPORT</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Live Interactive Report Preview Sheet (Printable Target) */}
+            <div id="drdo-pdf-report-preview" className="p-6 bg-slate-900 border border-slate-800 rounded-xl space-y-6 text-slate-200 font-mono-code">
+              {/* Report Header Cover */}
+              <div className="border-b-2 border-indigo-500 pb-4 flex justify-between items-start">
+                <div>
+                  <div className="text-[10px] font-bold text-cyan-400 tracking-widest uppercase">DEFENCE RESEARCH &amp; DEVELOPMENT ORGANISATION • DRDO INDIA</div>
+                  <h1 className="text-xl font-bold text-slate-100 mt-1 uppercase font-heading">{reportTitle}</h1>
+                  <div className="text-xs text-slate-400 mt-1">UAV ID: <strong className="text-slate-200">TAPAS-BH-201</strong> • POWERPLANT: <strong className="text-slate-200">ROTAX 914-TC</strong> • MISSION: <strong className="text-slate-200">{selectedProfile}</strong></div>
+                </div>
+                <div className="text-right text-[10px] text-slate-400 space-y-0.5">
+                  <div>DATE: <strong>{new Date().toISOString().split('T')[0]}</strong></div>
+                  <div>TIME: <strong>{new Date().toLocaleTimeString()}</strong></div>
+                  <div className="px-2 py-0.5 bg-emerald-950 text-emerald-300 border border-emerald-800 rounded font-bold text-[9px] mt-1 inline-block">
+                    VERIFIED CLASSIFIED
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 1: Executive Summary */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-sm text-cyan-300 border-b border-slate-800 pb-1">1. EXECUTIVE PROGNOSTICS SUMMARY</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-2.5 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">ENGINE HEALTH INDEX</span>
+                    <strong className="text-cyan-300 text-base font-telemetry">{simCalculatedMetrics.calcEngineHealthPercent}%</strong>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">PREDICTED RUL</span>
+                    <strong className="text-indigo-300 text-base font-telemetry">{simCalculatedMetrics.calcRulHours} Hours</strong>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">MISSION RISK SCORE</span>
+                    <strong className="text-amber-400 text-base font-telemetry">{simCalculatedMetrics.calcMissionRiskPercent}%</strong>
+                  </div>
+                  <div className="p-2.5 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-400 text-[10px] block">MISSION DECISION</span>
+                    <strong className="text-emerald-400 text-xs font-bold block">{simCalculatedMetrics.decision}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Live SCADA Telemetry Evidence */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-sm text-cyan-300 border-b border-slate-800 pb-1">2. REAL-TIME PHYSICAL SCADA TELEMETRY VERIFICATION</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                  <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">OIL PRESSURE</span>
+                    <span className="font-bold text-cyan-300 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</span>
+                  </div>
+                  <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">PEAK CHT</span>
+                    <span className="font-bold text-amber-300 font-telemetry">{simCalculatedMetrics.calcChtC}°C</span>
+                  </div>
+                  <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">PEAK EGT</span>
+                    <span className="font-bold text-red-400 font-telemetry">{simCalculatedMetrics.calcEgtC}°C</span>
+                  </div>
+                  <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">FUEL CONSUMPTION</span>
+                    <span className="font-bold text-emerald-400 font-telemetry">{simCalculatedMetrics.calcFuelFlowLph} L/h</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Explainable AI SHAP Attribution */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-sm text-cyan-300 border-b border-slate-800 pb-1">3. EXPLAINABLE AI (XAI) SHAP PARAMETER IMPORTANCE</h3>
+                <div className="space-y-1.5">
+                  {shapAttributions.map((a, i) => (
+                    <div key={i} className="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between items-center text-xs">
+                      <div>
+                        <span className="font-bold text-slate-200 block">{a.featureName}</span>
+                        <span className="text-slate-400 text-[10px]">{a.explanation}</span>
+                      </div>
+                      <span className={`font-bold ${a.contributionScore > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {(a.contributionScore * 100).toFixed(0)}% BIAS
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 4: Operational Action Plan */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-sm text-emerald-400 border-b border-slate-800 pb-1">4. PREDICTIVE MAINTENANCE &amp; OPERATIONAL ACTION PLAN</h3>
+                <div className="p-3 bg-slate-950 rounded border border-slate-800 space-y-1 text-xs">
+                  <span className="font-bold text-slate-200 block">AUTOMATED ACTION ADVISORIES:</span>
+                  <ul className="list-disc list-inside text-slate-300 space-y-1">
+                    {simCalculatedMetrics.recommendations.map((rec, i) => (
+                      <li key={i}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+              <span className="text-[10px] text-slate-500">Document ID: DRDO-AI-RPT-{Math.floor(100000 + Math.random() * 900000)}</span>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowReportConfig(false)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg font-bold text-slate-300"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={() => {
+                    window.print();
+                  }}
+                  className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-lg font-bold shadow-lg shadow-cyan-950/40 transition-all hover:scale-105 flex items-center gap-2"
+                >
+                  <span>🖨️ EXPORT / PRINT PDF REPORT</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
