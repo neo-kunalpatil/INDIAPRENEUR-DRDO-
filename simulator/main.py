@@ -1,3 +1,4 @@
+import time
 import asyncio
 import logging
 from contextlib import asynccontextmanager
@@ -26,7 +27,76 @@ latest_data: Dict[str, Any] = {}
 async def physics_loop():
     while True:
         physics.tick()
-        await asyncio.sleep(0.1) # 10Hz Tick
+        packet = {**physics.get_telemetry(), **physics.mission, **ai_engine.ai_state}
+        packet["missionPhase"] = physics.mission.get("missionPhase", "GROUND_IDLE")
+        packet["missionStatus"] = physics.mission.get("status", "STOPPED")
+        
+        await ws_manager.broadcast("telemetry:update", packet)
+        ai_engine.feed_data(packet)
+        rul_service.feed_data(packet)
+        
+        conn = get_db_connection()
+        if conn:
+            try:
+                import json as _json
+                active_faults = _json.dumps([k for k, v in physics.faults.items() if v])
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO engine_telemetry (
+                            timestamp, mission, rpm, throttle_pct, map_kpa, torque_nm, power_pct,
+                            fuel_flow_lph, fuel_remaining_l, egt_c, cht_c, oil_temp_c, oil_pressure_kpa,
+                            battery_voltage, alternator_voltage, altitude_m, airspeed_kmh, groundspeed_kmh,
+                            vertical_speed_ms, pitch_deg, roll_deg, yaw_deg, heading_deg, oat_c,
+                            humidity_pct, pressure_kpa, wind_speed_kmh, wind_direction_deg,
+                            density_altitude_m, health_score, active_faults
+                        ) VALUES (
+                            NOW(), %s, %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s,
+                            %s, %s, %s
+                        )
+                    """, (
+                        packet.get("missionPhase", "GROUND_IDLE"), packet.get("rpm", 0), packet.get("throttle", 0),
+                        packet.get("map", 0), packet.get("torque", 0), packet.get("loadPct", 0),
+                        packet.get("fuelFlow", 0), packet.get("fuelRemaining", 0), packet.get("egt", 0),
+                        packet.get("cht", 0), packet.get("oilTemp", 0), packet.get("oilPressure", 0),
+                        packet.get("batteryVoltage", 0), packet.get("alternatorVoltage", 0), packet.get("altitude", 0),
+                        packet.get("airspeed", 0), packet.get("groundSpeed", 0), packet.get("verticalSpeed", 0),
+                        packet.get("pitch", 0), packet.get("roll", 0), packet.get("yaw", 0), packet.get("heading", 0),
+                        packet.get("oat", 0), packet.get("humidity", 0), packet.get("pressure", 0),
+                        packet.get("windSpeed", 0), packet.get("windDirection", 0), packet.get("densityAltitude", 0),
+                        packet.get("health", 100), active_faults
+                    ))
+                    
+                    # Mission history: save when phase transitions
+                    if getattr(physics, 'stats', {}).get("triggerSave"):
+                        old_phase = physics.stats["phase"]
+                        physics.stats["triggerSave"] = False
+                        physics.stats["phase"] = packet.get("missionPhase", "GROUND_IDLE")
+                        dur = time.time() - physics.stats["startTime"]
+                        fuel = physics.stats["fuelStart"] - physics.state["fuelRemaining"]
+                        cur.execute(
+                            "INSERT INTO mission_history (mission_phase, start_time, duration, fuel_consumed, max_egt, max_cht, max_rpm, min_health) VALUES (%s, to_timestamp(%s), %s, %s, %s, %s, %s, %s)",
+                            (old_phase, physics.stats["startTime"], dur, fuel,
+                             physics.stats["maxEgt"], physics.stats["maxCht"],
+                             physics.stats["maxRpm"], physics.stats["minHealth"])
+                        )
+                        physics.stats["startTime"] = time.time()
+                        physics.stats["fuelStart"] = physics.state["fuelRemaining"]
+                        physics.stats["maxEgt"] = 0.0
+                        physics.stats["maxCht"] = 0.0
+                        physics.stats["maxRpm"] = 0.0
+                        physics.stats["minHealth"] = 100.0
+                        
+                conn.commit()
+            except Exception as e:
+                import traceback; traceback.print_exc()
+            finally:
+                conn.close()
+                
+        await asyncio.sleep(0.1)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,7 +123,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:4000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,14 +144,33 @@ async def receive_telemetry(data: Dict[str, Any]):
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO engine_telemetry (time, rpm, torque_nm, fuel_flow_lph, oil_temp_c, oil_pressure_kpa, egt_c, cht_c, battery_v, current_a, map_kpa, lambda, throttle_pct, load_pct, vib_x_g, vib_y_g, vib_z_g, health_score, mission_phase)
-                    VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    data.get("rpm", 0), data.get("torque", 0), data.get("fuelFlow", 0), data.get("oilTemp", 0), data.get("oilPress", 0),
-                    str(data.get("egt", 0)), str(data.get("cht", 0)), data.get("batteryV", 0), data.get("currentDraw", 0),
-                    data.get("map", 0), data.get("lambda", 0), data.get("throttle", 0), data.get("loadPct", 0),
-                    data.get("vibX", 0), data.get("vibY", 0), data.get("vibZ", 0), data.get("health", 100), data.get("missionPhase", "FLIGHT")
-                ))
+                        INSERT INTO engine_telemetry (
+                            timestamp, mission, rpm, throttle_pct, map_kpa, torque_nm, power_pct,
+                            fuel_flow_lph, fuel_remaining_l, egt_c, cht_c, oil_temp_c, oil_pressure_kpa,
+                            battery_voltage, alternator_voltage, altitude_m, airspeed_kmh, groundspeed_kmh,
+                            vertical_speed_ms, pitch_deg, roll_deg, yaw_deg, heading_deg, oat_c,
+                            humidity_pct, pressure_kpa, wind_speed_kmh, wind_direction_deg,
+                            density_altitude_m, health_score, active_faults
+                        ) VALUES (
+                            NOW(), %s, %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s, %s, %s,
+                            %s, %s, %s, %s,
+                            %s, %s, %s
+                        )
+                    """, (
+                        data.get("missionPhase", "STANDBY"), data.get("rpm", 0), data.get("throttle", 0),
+                        data.get("map", 0), data.get("torque", 0), data.get("loadPct", 0),
+                        data.get("fuelFlow", 0), data.get("fuelRemaining", 0), data.get("egt", 0),
+                        data.get("cht", 0), data.get("oilTemp", 0), data.get("oilPressure", 0),
+                        data.get("batteryVoltage", 0), data.get("alternatorVoltage", 0), data.get("altitude", 0),
+                        data.get("airspeed", 0), data.get("groundSpeed", 0), data.get("verticalSpeed", 0),
+                        data.get("pitch", 0), data.get("roll", 0), data.get("yaw", 0), data.get("heading", 0),
+                        data.get("oat", 0), data.get("humidity", 0), data.get("pressure", 0),
+                        data.get("windSpeed", 0), data.get("windDirection", 0), data.get("densityAltitude", 0),
+                        data.get("health", 100), __import__("json").dumps([k for k, v in physics.faults.items() if v])
+                    ))
                 conn.commit()
         except Exception:
             pass
@@ -92,8 +181,34 @@ async def receive_telemetry(data: Dict[str, Any]):
 
 @app.post("/api/mission")
 async def receive_mission(data: Dict[str, Any]):
-    await ws_manager.broadcast("mission:update", data)
-    return {"status": "ok"}
+    if "phase" in data:
+        physics.mission["missionPhase"] = data["phase"]
+    if "missionPhase" in data:
+        physics.mission["missionPhase"] = data["missionPhase"]
+    if "isActive" in data:
+        physics.mission["isActive"] = bool(data["isActive"])
+    if "status" in data:
+        physics.mission["status"] = data["status"]
+        # When START is pressed and status=RUNNING but isActive not sent, still activate
+        if data["status"] == "RUNNING" and "isActive" not in data:
+            physics.mission["isActive"] = True
+        if data["status"] == "STOPPED":
+            physics.mission["isActive"] = False
+            physics.mission["missionPhase"] = "GROUND_IDLE"
+        if data["status"] == "PAUSED":
+            physics.mission["isActive"] = False
+            
+    for k, v in data.items():
+        if k in physics.mission:
+            physics.mission[k] = v
+
+    state_summary = {
+        "missionPhase": physics.mission["missionPhase"],
+        "isActive": physics.mission["isActive"],
+        "status": physics.mission.get("status", "STOPPED"),
+    }
+    await ws_manager.broadcast("mission:update", {**data, **state_summary})
+    return {"status": "ok", **state_summary}
 
 @app.post("/api/faults")
 async def receive_faults(data: Dict[str, Any]):
@@ -182,7 +297,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             # Handle socket messages identical to Socket.io / ws INGEST
-            await ws_manager.broadcast("telemetry:update", physics.state)
+            await ws_manager.broadcast("telemetry:update", physics.get_telemetry())
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
 

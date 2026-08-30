@@ -22,12 +22,28 @@ def init_db():
     try:
         with conn.cursor() as cur:
             cur.execute("""
+                CREATE TABLE IF NOT EXISTS mission_history (id SERIAL PRIMARY KEY, mission_phase VARCHAR(50), start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(), end_time TIMESTAMPTZ, duration REAL, fuel_consumed REAL, max_egt REAL, max_cht REAL, max_rpm REAL, min_health REAL);
                 CREATE TABLE IF NOT EXISTS engine_telemetry (
                     time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     rpm REAL, oil_temp_c REAL, oil_press_kpa REAL, cht_c REAL, egt_c REAL,
-                    fuel_flow_lph REAL, map_kpa REAL, throttle_pct REAL, lambda_ratio REAL,
-                    vib_x_g REAL, vib_y_g REAL, vib_z_g REAL, battery_v REAL, battery_a REAL
+                    fuel_flow_lph REAL, fuel_remaining_l REAL, throttle_pct REAL, map_kpa REAL, lambda_ratio REAL,
+                    battery_v REAL, alternator_v REAL, current_a REAL,
+                    vib_x_g REAL, vib_y_g REAL, vib_z_g REAL,
+                    load_pct REAL, torque_nm REAL, power_kw REAL,
+                    combustion_eff REAL, misfire_count INTEGER, health_score REAL,
+                    thermal_stress REAL, wear_index REAL, failure_prob REAL, rul_hours REAL,
+                    altitude_m REAL, airspeed_mps REAL, ground_speed_mps REAL, vertical_speed_mps REAL,
+                    pitch_deg REAL, roll_deg REAL, yaw_deg REAL, heading_deg REAL,
+                    wind_speed_mps REAL, wind_direction_deg REAL, oat_c REAL,
+                    humidity_pct REAL, pressure_kpa REAL, density_altitude_m REAL, mission_phase VARCHAR(50)
                 );
+                
+                -- Convert to hypertable if it isn't already
+                SELECT create_hypertable('engine_telemetry', 'time', if_not_exists => TRUE);
+                
+                -- Add a retention policy (e.g. keep for 30 days)
+                SELECT add_retention_policy('engine_telemetry', INTERVAL '30 days', if_not_exists => TRUE);
+                
                 CREATE TABLE IF NOT EXISTS mission_data (
                     time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     mission_phase VARCHAR(50), altitude REAL, speed REAL, temperature REAL, humidity REAL, pressure REAL

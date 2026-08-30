@@ -17,7 +17,7 @@ export default function EnvPage() {
       <h1 className="text-xl font-bold text-white border-b border-blue-500 pb-2">Environment & Flight Envelope</h1>
       <div className="grid grid-cols-2 gap-8">
         <div><Val l="Altitude" v={p.altitude||0} u="m" /><Val l="Airspeed" v={p.airspeed||0} u="km/h" /><Val l="OAT" v={p.oat||0} u="°C" /></div>
-        <div><Val l="Pressure" v={p.pressure||0} u="kPa" /><Val l="Humidity" v={p.humidity||0} u="%" /><Val l="Density Alt" v={p.altitude||0} u="m" /></div>
+        <div><Val l="Pressure" v={p.pressure||0} u="kPa" /><Val l="Humidity" v={p.humidity||0} u="%" /><Val l="Density Alt" v={p.densityAltitude||0} u="m" /></div>
       </div>
     </div>
   );
