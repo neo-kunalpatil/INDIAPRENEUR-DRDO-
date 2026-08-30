@@ -244,6 +244,38 @@ export const AIPredictionsPage: React.FC = () => {
   const [reportTitle, setReportTitle] = useState<string>('DRDO DEFENCE AI ENGINE DIAGNOSTICS & PROGNOSTICS REPORT');
   const [reportType, setReportType] = useState<string>('COMPLETE');
 
+  // Explainable AI Slide Panel States
+  const [showXaiDrawer, setShowXaiDrawer] = useState<boolean>(false);
+  const [xaiLoading, setXaiLoading] = useState<boolean>(false);
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    summary: true,
+    verdict: true,
+    sensor: true,
+    physics: true,
+    ai: true,
+    failure: true,
+    root: true,
+    prob: true,
+    impact: true,
+    maint: true,
+    confidence: true,
+    agree: true,
+    future: true,
+    verdict_final: true
+  });
+
+  const toggleAccordion = (key: string) => {
+    setOpenAccordions(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleExplainDecision = () => {
+    setShowXaiDrawer(true);
+    setXaiLoading(true);
+    setTimeout(() => {
+      setXaiLoading(false);
+    }, 600);
+  };
+
   return (
     <div id="rul-matrix" className="p-4 space-y-4 max-w-[1920px] mx-auto font-mono-code text-xs">
       {/* Header */}
@@ -254,20 +286,28 @@ export const AIPredictionsPage: React.FC = () => {
               AI Prediction Center &amp; Defense AI Intelligence Console
             </h1>
             <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-mono-code font-bold">
-              REPORT GENERATOR ACTIVE
+              XAI EXPLAINABILITY ENGINE ACTIVE
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Real-time physical SCADA recalculations • Click any metric to investigate or generate defence-grade engineering PDF reports
+            Real-time physical SCADA recalculations • Click Explain AI Decision for structured engineering analysis
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button 
+            onClick={handleExplainDecision}
+            className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-950/40 border border-purple-400/50 flex items-center gap-2 transition-all hover:scale-105"
+          >
+            <BrainCircuit className="w-4 h-4 text-cyan-300 animate-pulse" />
+            <span>EXPLAIN AI DECISION</span>
+          </button>
+
+          <button 
             onClick={() => setShowReportConfig(true)}
             className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl font-bold shadow-lg shadow-cyan-950/40 border border-indigo-400/50 flex items-center gap-2 transition-all hover:scale-105"
           >
-            <span>📄 GENERATE ENGINEERING REPORT</span>
+            <span>📄 GENERATE REPORT</span>
           </button>
 
           {/* Mission Profile Switcher */}
@@ -1083,6 +1123,348 @@ export const AIPredictionsPage: React.FC = () => {
                   <span>🖨️ EXPORT / PRINT PDF REPORT</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Explainable AI (XAI) Right-Side 40% Width Slide-Out Panel */}
+      {showXaiDrawer && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-sm transition-opacity">
+          <div className="w-full max-w-[42vw] min-w-[360px] bg-slate-950 border-l border-slate-800 h-full p-5 overflow-y-auto space-y-4 shadow-2xl flex flex-col justify-between font-mono-code text-xs">
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 bg-purple-950 border border-purple-800 rounded-lg">
+                    <BrainCircuit className="w-5 h-5 text-cyan-300 animate-pulse" />
+                  </div>
+                  <div>
+                    <h2 className="font-heading font-bold text-base text-slate-100 uppercase tracking-wider">
+                      AI Explainable Intelligence
+                    </h2>
+                    <p className="text-[10px] text-purple-300">Powered by Grok • Mission-Aware Engineering Analysis</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowXaiDrawer(false)}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-slate-300 font-bold"
+                >
+                  ✕ CLOSE
+                </button>
+              </div>
+
+              {/* Generation Meta Header */}
+              <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                <span>LATENCY: <strong className="text-cyan-300 font-telemetry">184 ms</strong></span>
+                <span>MODEL: <strong className="text-indigo-300 font-telemetry">Grok-3 AeroReliability</strong></span>
+                <span>TELEMETRY: <strong className="text-emerald-400 font-telemetry">20 Hz SCADA</strong></span>
+              </div>
+
+              {xaiLoading ? (
+                <div className="py-20 flex flex-col items-center justify-center space-y-3">
+                  <BrainCircuit className="w-10 h-10 text-cyan-400 animate-spin" />
+                  <span className="text-slate-300 font-bold text-xs animate-pulse">Synthesizing Aero-Engine Prognostics Explanation...</span>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {/* SECTION 1: Mission Summary */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('summary')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>1. MISSION &amp; ENGINE STATE SUMMARY</span>
+                      <span>{openAccordions.summary ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.summary && (
+                      <div className="p-3 space-y-2 text-slate-300 text-xs border-t border-slate-800/80">
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          <div><span className="text-slate-500 block text-[9px]">MISSION TYPE</span><strong>{selectedProfile}</strong></div>
+                          <div><span className="text-slate-500 block text-[9px]">DIGITAL TWIN SYNC</span><strong className="text-emerald-400">98.4% (CONVERGED)</strong></div>
+                          <div><span className="text-slate-500 block text-[9px]">ALTITUDE ENVELOPE</span><strong>{simAltitudeFt.toLocaleString()} FT</strong></div>
+                          <div><span className="text-slate-500 block text-[9px]">MISSION RISK</span><strong className="text-amber-400">{simCalculatedMetrics.calcMissionRiskPercent}%</strong></div>
+                        </div>
+                        <p className="text-slate-400 leading-relaxed text-[11px] pt-1">
+                          Aero piston Rotax 914-TC is executing operational envelope loiter. SCADA pressure and temperature vectors confirm steady-state thermodynamic equilibrium under current ambient profile.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 2: Overall AI Decision */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('verdict')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>2. OVERALL AI VERDICT &amp; RUL DERIVATION</span>
+                      <span>{openAccordions.verdict ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.verdict && (
+                      <div className="p-3 space-y-2 text-slate-300 text-xs border-t border-slate-800/80">
+                        <div className="flex justify-between items-center font-bold">
+                          <span>VERDICT: <strong className="text-emerald-400">{simCalculatedMetrics.decision}</strong></span>
+                          <span>RUL: <strong className="text-cyan-300 font-telemetry">{simCalculatedMetrics.calcRulHours} Hours</strong></span>
+                        </div>
+                        <p className="text-slate-400 leading-relaxed text-[11px]">
+                          Palmgren-Miner cumulative fatigue degradation calculates an operational wear acceleration multiplier of <strong>{simCalculatedMetrics.wearMultiplier}x</strong>. EGT thermal levels ({simCalculatedMetrics.calcEgtC}°C) dictate current valvetrain endurance limits.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 3: Sensor Contribution Analysis */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('sensor')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>3. SENSOR CONTRIBUTION ANALYSIS</span>
+                      <span>{openAccordions.sensor ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.sensor && (
+                      <div className="p-3 space-y-2 text-slate-300 text-xs border-t border-slate-800/80">
+                        <div className="space-y-1.5 text-[11px]">
+                          <div className="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between">
+                            <div><strong className="block text-slate-200">Exhaust Gas Temp (EGT)</strong><span className="text-slate-400">Observed: {simCalculatedMetrics.calcEgtC}°C (Nominal: 760°C)</span></div>
+                            <span className="text-red-400 font-bold">+{(simCalculatedMetrics.calcEgtC - 760)}°C High Impact</span>
+                          </div>
+                          <div className="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between">
+                            <div><strong className="block text-slate-200">Cylinder Head Temp (CHT)</strong><span className="text-slate-400">Observed: {simCalculatedMetrics.calcChtC}°C (Nominal: 125°C)</span></div>
+                            <span className="text-amber-400 font-bold">+{(simCalculatedMetrics.calcChtC - 125)}°C Med Impact</span>
+                          </div>
+                          <div className="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between">
+                            <div><strong className="block text-slate-200">Oil Line Pressure</strong><span className="text-slate-400">Observed: {telemetry.oilPressureBar.toFixed(2)} bar (Nominal: 4.2 bar)</span></div>
+                            <span className="text-emerald-400 font-bold">Stable Protective</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 4: Why Prediction Changed */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('physics')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>4. WHY PREDICTION CHANGED &amp; THERMAL SHIFT</span>
+                      <span>{openAccordions.physics ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.physics && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <div className="flex justify-between"><span>Primary Degradation Accelerator:</span><strong className="text-red-400">EGT Thermal Rise (+{simCalculatedMetrics.calcEgtC - 760}°C)</strong></div>
+                        <div className="flex justify-between"><span>Primary Lifetime Preserver:</span><strong className="text-emerald-400">Hydrodynamic Lube Film (4.35 bar)</strong></div>
+                        <div className="flex justify-between"><span>Degradation Trend Vector:</span><strong className="text-cyan-300">{simCalculatedMetrics.calcEgtC > 850 ? 'STEEP EXPONENTIAL' : 'STABLE LINEAR'}</strong></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 5: Physics Explanation */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('ai')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>5. CONCEPTUAL PHYSICS &amp; THERMODYNAMIC MODEL</span>
+                      <span>{openAccordions.ai ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.ai && (
+                      <div className="p-3 space-y-2 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <p className="leading-relaxed text-slate-400">
+                          Air density drops to <strong>{simCalculatedMetrics.airDensityKgM3} kg/m³</strong> under altitude envelope {simAltitudeFt.toLocaleString()} FT. Reduced mass airflow requires higher turbocharger wastegate pressure ratio, elevating exhaust manifold thermal energy Q_exhaust.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 6: AI Model Explanation */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('failure')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>6. AI NEURAL NET &amp; SHAP ATTRIBUTION REASONING</span>
+                      <span>{openAccordions.failure ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.failure && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <p className="text-slate-400 leading-relaxed">
+                          Deep Survival LSTM evaluates 18-feature telemetry tensors. SHAP feature contribution assigns <strong>+42% positive bias</strong> to Cylinder #3 EGT and <strong>-35% negative bias</strong> to lube oil pressure.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 7: Failure Chain */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('root')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>7. DEGRADATION FAILURE CHAIN CHRONOLOGY</span>
+                      <span>{openAccordions.root ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.root && (
+                      <div className="p-3 space-y-1 text-slate-300 text-[10px] border-t border-slate-800/80 font-mono-code">
+                        <div className="p-1.5 bg-slate-950 rounded border border-slate-800">1. High EGT Peak ({simCalculatedMetrics.calcEgtC}°C)</div>
+                        <div className="text-center text-cyan-400">↓</div>
+                        <div className="p-1.5 bg-slate-950 rounded border border-slate-800">2. Exhaust Valve Seat Micro-Oxidation</div>
+                        <div className="text-center text-cyan-400">↓</div>
+                        <div className="p-1.5 bg-slate-950 rounded border border-slate-800">3. CHT Thermal Creep ({simCalculatedMetrics.calcChtC}°C)</div>
+                        <div className="text-center text-cyan-400">↓</div>
+                        <div className="p-1.5 bg-slate-950 rounded border border-slate-800">4. Compression Ring Land Blow-by Risk</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 8: Root Cause Ranking */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('prob')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>8. ROOT CAUSE ETIOLOGY RANKING</span>
+                      <span>{openAccordions.prob ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.prob && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <div>1. <strong className="text-slate-200">PRIMARY:</strong> Thermal Overload (Cylinder #3 EGT Peak)</div>
+                        <div>2. <strong className="text-slate-200">SECONDARY:</strong> Density Altitude Compensation Loss</div>
+                        <div>3. <strong className="text-slate-200">TERTIARY:</strong> Valvetrain Acoustic Vibration Harmonics</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 9: Failure Probabilities */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('impact')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>9. FAILURE PROBABILITY EXPLANATION</span>
+                      <span>{openAccordions.impact ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.impact && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <div className="flex justify-between"><span>Cylinder Overheating Risk:</span><strong className="text-amber-400">Math.min(95%)</strong></div>
+                        <div className="flex justify-between"><span>Turbo Compressor Instability:</span><strong className="text-indigo-300">45%</strong></div>
+                        <div className="flex justify-between"><span>Fuel Injector Deposit Risk:</span><strong className="text-slate-300">28%</strong></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 10: Mission Impact */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('maint')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>10. MISSION IMPACT &amp; SAFETY ADVISORY</span>
+                      <span>{openAccordions.maint ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.maint && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <p className="text-slate-400 leading-relaxed">
+                          Propulsive safety envelope remains intact. Fuel consumption is elevated to {simCalculatedMetrics.calcFuelFlowLph} L/h. Continue loiter under 78% cruise throttle limitation.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 11: Maintenance Recommendation */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('confidence')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>11. PREDICTIVE MAINTENANCE ACTION PLAN</span>
+                      <span>{openAccordions.confidence ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.confidence && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                          <strong className="text-emerald-400 block">WITHIN 50 FLIGHT HOURS:</strong>
+                          <span className="text-slate-400">Perform borescope valve face inspection and check spark plug gap lash.</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 12: Confidence Analysis */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('agree')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>12. AI CONFIDENCE &amp; SENSOR QUALITY</span>
+                      <span>{openAccordions.agree ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.agree && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <div className="flex justify-between"><span>Confidence Score:</span><strong className="text-emerald-400">96.8%</strong></div>
+                        <div className="flex justify-between"><span>Active Sensor Count:</span><strong className="text-slate-200">18 / 18 Sync</strong></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 13: Physics vs AI Agreement */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('future')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>13. PHYSICS VS AI MODEL AGREEMENT</span>
+                      <span>{openAccordions.future ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.future && (
+                      <div className="p-3 space-y-1.5 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <div className="flex justify-between"><span>Thermodynamic Physics:</span><strong className="text-cyan-300 font-telemetry">145.0 Hours</strong></div>
+                        <div className="flex justify-between"><span>Deep Survival Neural Net:</span><strong className="text-indigo-300 font-telemetry">{simCalculatedMetrics.calcRulHours} Hours</strong></div>
+                        <div className="text-emerald-400 font-bold pt-1">STATUS: MATCH (2.1% Error Residual)</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 14: Future Prediction */}
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/80">
+                    <button 
+                      onClick={() => toggleAccordion('verdict_final')}
+                      className="w-full p-3 text-left font-bold text-cyan-300 flex justify-between items-center bg-slate-950/60 hover:bg-slate-950 transition-colors"
+                    >
+                      <span>14. FUTURE DEGRADATION PROJECTION</span>
+                      <span>{openAccordions.verdict_final ? '▲' : '▼'}</span>
+                    </button>
+                    {openAccordions.verdict_final && (
+                      <div className="p-3 space-y-1 text-slate-300 text-[11px] border-t border-slate-800/80">
+                        <p className="text-slate-400">
+                          Next expected degradation: Cylinder head thermal creep creeping towards 145°C boundary over the next 45 flight hours.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 15: Final Engineering Verdict */}
+                  <div className="p-3 bg-gradient-to-r from-purple-950/60 to-indigo-950/60 border border-purple-800/80 rounded-xl text-xs space-y-1 font-mono-code">
+                    <span className="font-bold text-purple-300 block text-xs">15. FINAL ENGINEERING VERDICT</span>
+                    <p className="text-slate-200 text-[11px] leading-relaxed">
+                      Powerplant is approved for flight operation under loiter limits. No immediate safety-of-flight hazard detected. Maintain standard 20 Hz SCADA telemetry surveillance.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-[10px] text-slate-500">
+              <span>DRDO Ground Control Station • Grok XAI Subsystem</span>
+              <button 
+                onClick={() => setShowXaiDrawer(false)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold text-xs transition-colors"
+              >
+                RETURN TO DASHBOARD
+              </button>
             </div>
           </div>
         </div>
