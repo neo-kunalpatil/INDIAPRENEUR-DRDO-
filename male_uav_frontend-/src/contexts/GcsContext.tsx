@@ -87,8 +87,8 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [voiceAlertsEnabled, setVoiceAlertsEnabled] = useState<boolean>(true);
   const [nightVisionMode, setNightVisionMode] = useState<boolean>(false);
   const [isSimulationRunning, setIsSimulationRunning] = useState<boolean>(true);
-  const [activeFaults, setActiveFaults] = useState<InjectedFault[]>(PRESET_FAULTS);
-  const [alerts, setAlerts] = useState<AlertNotification[]>(INITIAL_ALERTS);
+  const [activeFaults, setActiveFaults] = useState<InjectedFault[]>([]);
+  const [alerts, setAlerts] = useState<AlertNotification[]>([]);
   const [mission] = useState<MissionProfile>(MOCK_ACTIVE_MISSION);
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [currentTourStep, setCurrentTourStep] = useState<number>(0);
@@ -138,13 +138,12 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!voiceAlertsEnabled) return;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
-        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.05;
-        utterance.pitch = 0.95;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
         window.speechSynthesis.speak(utterance);
-      } catch (err) {
-        console.warn('Speech synthesis error:', err);
+      } catch (e) {
+        console.warn('Speech synthesis failed:', e);
       }
     }
   }, [voiceAlertsEnabled]);
@@ -204,22 +203,24 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 setUavFleet(prev => prev.map(u => u.id === selectedUavId ? { ...u, engineHealthIndex: Number(healthVal.toFixed(1)) } : u));
               }
 
-              // Dynamic 1:1 Fault Synchronization from Backend Stream Payload
+              // Dynamic 1:1 Fault Synchronization strictly from Simulator Stream Payload
               if (Array.isArray(data.active_faults)) {
-                setActiveFaults((prev) =>
-                  prev.map((f) => {
-                    const match = data.active_faults.find((af: any) => 
-                      (af.id && af.id.toLowerCase() === f.id.toLowerCase()) || 
-                      (af.name && af.name.toLowerCase() === f.name.toLowerCase()) ||
-                      (af.fault_type && af.fault_type.toLowerCase() === f.id.toLowerCase())
-                    );
-                    if (match) {
-                      const sevPercent = match.severityPercent || (match.severity === 'CRITICAL' ? 90 : match.severity === 'HIGH' ? 70 : match.severity === 'MEDIUM' ? 50 : 30);
-                      return { ...f, active: true, severityPercent: sevPercent, timestampInjected: f.timestampInjected || new Date().toLocaleTimeString() };
-                    }
-                    return f;
-                  })
-                );
+                const dynamicFaults: InjectedFault[] = data.active_faults.map((af: any, idx: number) => {
+                  const faultName = af.name || af.fault_type || 'Engine Anomaly';
+                  const sevPercent = af.severityPercent || (af.severity === 'CRITICAL' ? 90 : af.severity === 'HIGH' ? 70 : af.severity === 'MEDIUM' ? 50 : 30);
+                  return {
+                    id: af.id || `sim-fault-${idx}-${Date.now()}`,
+                    type: af.fault_type || 'SIM_FAULT',
+                    name: faultName,
+                    description: `Active simulator fault: ${faultName} operating at ${sevPercent}% severity.`,
+                    severityPercent: sevPercent,
+                    component: af.component || 'powerplant',
+                    active: true,
+                    timestampInjected: af.timestampInjected || new Date().toLocaleTimeString(),
+                    affectedParameters: ['oilPressureBar', 'chtC', 'egtC', 'vibrationRmsMmS']
+                  };
+                });
+                setActiveFaults(dynamicFaults);
               }
             }
           } catch (e) {

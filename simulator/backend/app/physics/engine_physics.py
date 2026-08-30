@@ -354,6 +354,20 @@ class EnginePhysics:
         self.state["throttle"] = effective_throttle
         self.state["throttle_pct"] = effective_throttle
 
-        # Count active faults
-        active_cnt = sum(1 for k, v in self.faults.items() if isinstance(v, dict) and v.get("active", False))
-        self.state["active_fault_count"] = active_cnt
+        # Count and record active faults for dynamic 1:1 stream broadcast
+        active_list = []
+        for name, info in self.faults.items():
+            if isinstance(info, dict) and info.get("active", False):
+                sev_mult = info.get("sev", 1.0)
+                sev_str = "CRITICAL" if sev_mult >= 2.5 else "HIGH" if sev_mult >= 1.5 else "MEDIUM" if sev_mult >= 0.8 else "LOW"
+                active_list.append({
+                    "id": name.lower().replace(" ", "-"),
+                    "name": name,
+                    "fault_type": name,
+                    "severity": sev_str,
+                    "severityPercent": int(sev_mult * 50),
+                    "component": name.split()[0]
+                })
+
+        self.state["active_faults"] = active_list
+        self.state["active_fault_count"] = len(active_list)

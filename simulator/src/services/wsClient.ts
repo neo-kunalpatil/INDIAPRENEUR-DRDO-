@@ -54,13 +54,7 @@ class WSClient {
     };
 
     this.ws.onerror = (e: Event) => {
-      // Browser WebSocket API doesn't provide error details in the Event for security reasons.
-      // A failure here usually means:
-      // 1. Backend is down
-      // 2. Port mismatch
-      // 3. CORS blocked the upgrade request
-      // 4. localhost resolved to IPv6 (::1) but backend is bound to IPv4
-      console.error('[WS] Connection Error. Verify backend is running on port 4000 and CORS allows origin.');
+      console.warn('[WS] Connection retrying on port 4000...');
       useTelemetryStore.getState().setTelemetry({ connected: false });
       
       // Try 127.0.0.1 on next attempt if we were trying localhost

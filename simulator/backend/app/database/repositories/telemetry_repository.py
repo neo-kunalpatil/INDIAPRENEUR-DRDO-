@@ -7,6 +7,15 @@ class TelemetryRepository:
         if not conn:
             return
         try:
+            def safe_float(v, default=0.0):
+                try:
+                    val = float(v)
+                    if abs(val) < 1e-12 and val != 0:
+                        return 0.0
+                    return round(val, 6)
+                except (TypeError, ValueError):
+                    return default
+
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO engine_telemetry (
@@ -17,16 +26,16 @@ class TelemetryRepository:
                     )
                     VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    data.get("rpm", 0), data.get("torque_nm", data.get("torque", 0)),
-                    data.get("fuelFlow", data.get("fuel_flow_lph", 0)), data.get("oilTemp", data.get("oil_temp_c", 0)),
-                    data.get("oilPressure", data.get("oil_pressure_kpa", 0)), data.get("egt", data.get("egt_c", 0)),
-                    data.get("cht", data.get("cht_c", 0)), data.get("batteryVoltage", data.get("battery_v", 0)),
-                    data.get("current_a", 0), data.get("map", data.get("map_kpa", 0)), data.get("lambda", 1.0),
-                    data.get("throttle", data.get("throttle_pct", 0)), data.get("load_pct", 0),
-                    data.get("vib_x_g", 0), data.get("vib_y_g", 0), data.get("vibZ", data.get("vib_z_g", 0)),
-                    data.get("health", 100), data.get("mission_phase", "FLIGHT"),
-                    data.get("altitude", 0), data.get("airspeed", 0), data.get("verticalSpeed", 0),
-                    data.get("fuelRemaining", 150)
+                    safe_float(data.get("rpm", 0)), safe_float(data.get("torque_nm", data.get("torque", 0))),
+                    safe_float(data.get("fuelFlow", data.get("fuel_flow_lph", 0))), safe_float(data.get("oilTemp", data.get("oil_temp_c", 0))),
+                    safe_float(data.get("oilPressure", data.get("oil_pressure_kpa", 0))), safe_float(data.get("egt", data.get("egt_c", 0))),
+                    safe_float(data.get("cht", data.get("cht_c", 0))), safe_float(data.get("batteryVoltage", data.get("battery_v", 0))),
+                    safe_float(data.get("current_a", 0)), safe_float(data.get("map", data.get("map_kpa", 0))), safe_float(data.get("lambda", 1.0), 1.0),
+                    safe_float(data.get("throttle", data.get("throttle_pct", 0))), safe_float(data.get("load_pct", 0)),
+                    safe_float(data.get("vib_x_g", 0)), safe_float(data.get("vib_y_g", 0)), safe_float(data.get("vibZ", data.get("vib_z_g", 0))),
+                    safe_float(data.get("health", 100), 100.0), str(data.get("mission_phase", "FLIGHT")),
+                    safe_float(data.get("altitude", 0)), safe_float(data.get("airspeed", 0)), safe_float(data.get("verticalSpeed", 0)),
+                    safe_float(data.get("fuelRemaining", 150), 150.0)
                 ))
                 conn.commit()
         except Exception as e:
