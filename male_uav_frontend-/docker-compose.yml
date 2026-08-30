@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # 1. GCS Operator Frontend (React 19 + Vite)
+  # -------------------------------------------------------------
+  male_uav_frontend:
+    build:
+      context: ./male_uav_frontend-
+      dockerfile: Dockerfile
+    container_name: drdo_uav_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000/ws
+    networks:
+      - drdo_gcs_network
+    depends_on:
+      - backend-service
+
+  # -------------------------------------------------------------
+  # 2. Telemetry & Engine Simulator Service
+  # -------------------------------------------------------------
+  simulator-service:
+    build:
+      context: ./simulator-service
+      dockerfile: Dockerfile
+    container_name: drdo_simulator_service
+    ports:
+      - "5001:5001"
+    environment:
+      - SIMULATION_FREQUENCY_HZ=20
+      - BROKER_URL=redis://database_cache:6379/0
+    networks:
+      - drdo_gcs_network
+    depends_on:
+      - database
+
+  # -------------------------------------------------------------
+  # 3. Central Backend API & WebSocket Orchestrator
+  # -------------------------------------------------------------
+  backend-service:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile
+    container_name: drdo_backend_service
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://drdo_admin:drdo_secure_pass@database_timescale:5432/uav_telemetry
+      - REDIS_URL=redis://database_cache:6379/0
+      - AI_SERVICE_URL=http://ai-service:5000
+      - TWIN_SERVICE_URL=http://digital-twin-service:5002
+    networks:
+      - drdo_gcs_network
+    depends_on:
+      - database
+      - simulator-service
+
+  # -------------------------------------------------------------
+  # 4. Deep Neural AI & Prognostics Service
+  # -------------------------------------------------------------
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: drdo_ai_service
+    ports:
+      - "5000:5000"
+    environment:
+      - MODEL_VERSION=v4.2.8
+      - REDIS_URL=redis://database_cache:6379/0
+    networks:
+      - drdo_gcs_network
+    depends_on:
+      - database
+
+  # -------------------------------------------------------------
+  # 5. Digital Twin Physics & Thermodynamic Model Engine
+  # -------------------------------------------------------------
+  digital-twin-service:
+    build:
+      context: ./digital-twin-service
+      dockerfile: Dockerfile
+    container_name: drdo_digital_twin_service
+    ports:
+      - "5002:5002"
+    environment:
+      - PHYSICS_SOLVER=FIRST_PRINCIPLES_OTTO
+      - REDIS_URL=redis://database_cache:6379/0
+    networks:
+      - drdo_gcs_network
+    depends_on:
+      - database
+
+  # -------------------------------------------------------------
+  # 6. Database Layer (TimescaleDB + Redis)
+  # -------------------------------------------------------------
+  database:
+    image: timescale/timescaledb:latest-pg15
+    container_name: drdo_database_timescale
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=uav_telemetry
+      - POSTGRES_USER=drdo_admin
+      - POSTGRES_PASSWORD=drdo_secure_pass
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - drdo_gcs_network
+
+  database_cache:
+    image: redis:7-alpine
+    container_name: drdo_database_cache
+    ports:
+      - "6379:6379"
+    networks:
+      - drdo_gcs_network
+
+networks:
+  drdo_gcs_network:
+    driver: bridge
+
+volumes:
+  timescale_data:
