@@ -52,7 +52,15 @@ def get_db_connection():
     try:
         pool_inst = get_connection_pool()
         if pool_inst:
-            return pool_inst.getconn()
+            conn = pool_inst.getconn()
+            if conn and conn.closed != 0:
+                # Connection was closed or dropped by remote host, discard and reconnect
+                try:
+                    pool_inst.putconn(conn, close=True)
+                except Exception:
+                    pass
+                conn = psycopg2.connect(TIMESCALE_DATABASE_URL)
+            return conn
         return psycopg2.connect(TIMESCALE_DATABASE_URL)
     except Exception as e:
         print(f"[Timescale DB Connection Failure] {e}")
@@ -62,6 +70,8 @@ def release_db_connection(conn):
     if not conn:
         return
     try:
+        if conn.closed != 0:
+            return
         pool_inst = get_connection_pool()
         if pool_inst:
             pool_inst.putconn(conn)
