@@ -275,7 +275,34 @@ export const AIPredictionsPage: React.FC = () => {
             {(['HIGH_ALTITUDE', 'HOT_DESERT', 'SEA_LEVEL', 'COMBAT_HIGH_G'] as const).map((prof) => (
               <button
                 key={prof}
-                onClick={() => setSelectedProfile(prof)}
+                onClick={() => {
+                  setSelectedProfile(prof);
+                  if (prof === 'HIGH_ALTITUDE') {
+                    setSimAltitudeFt(24000);
+                    setSimAmbientTempC(-14);
+                    setSimThrottlePercent(88);
+                    setSimPayloadKg(180);
+                    setSimInjectedFault('NONE');
+                  } else if (prof === 'HOT_DESERT') {
+                    setSimAltitudeFt(12500);
+                    setSimAmbientTempC(45);
+                    setSimThrottlePercent(82);
+                    setSimPayloadKg(210);
+                    setSimInjectedFault('NONE');
+                  } else if (prof === 'SEA_LEVEL') {
+                    setSimAltitudeFt(2500);
+                    setSimAmbientTempC(25);
+                    setSimThrottlePercent(75);
+                    setSimPayloadKg(150);
+                    setSimInjectedFault('NONE');
+                  } else if (prof === 'COMBAT_HIGH_G') {
+                    setSimAltitudeFt(18000);
+                    setSimAmbientTempC(38);
+                    setSimThrottlePercent(98);
+                    setSimPayloadKg(260);
+                    setSimInjectedFault('TURBO');
+                  }
+                }}
                 className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
                   selectedProfile === prof
                     ? 'bg-indigo-600 text-white shadow-sm'
