@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Activity, 
   Flame, 
@@ -17,7 +17,14 @@ import {
   CheckCircle2,
   Layers,
   Thermometer,
-  Compass
+  Compass,
+  Radio,
+  Network,
+  Cpu,
+  Clock,
+  Check,
+  RefreshCw,
+  ZapOff
 } from 'lucide-react';
 import { useGcs } from '../contexts/GcsContext';
 import { Gauge } from '../components/common/Gauge';
@@ -26,623 +33,288 @@ import { StatusBadge } from '../components/common/StatusBadge';
 
 export const LiveMonitoringPage: React.FC = () => {
   const { selectedUav, telemetry } = useGcs();
-  const [selectedSubsystem, setSelectedSubsystem] = useState<'ALL' | 'THERMAL' | 'HYDRAULIC' | 'VIBRATION' | 'TURBO'>('ALL');
-  const [expandedXaiNode, setExpandedXaiNode] = useState<string | null>(null);
+  const [selectedSensorNode, setSelectedSensorNode] = useState<string | null>('RPM');
+  const [pipelineSpeedHz, setPipelineSpeedHz] = useState<number>(50);
+  const [packetCounter, setPacketCounter] = useState<number>(142080);
+  const [filterMode, setFilterMode] = useState<'KALMAN' | 'EMA' | 'MEDIAN' | 'RAW'>('KALMAN');
 
-  // Simulated vibration FFT frequency bins dynamically computed from RMS
-  const fftBins = [
-    { hz: 15, mag: 0.8, label: 'Sub-harmonic' },
-    { hz: 30, mag: 1.2, label: '1X Camshaft' },
-    { hz: 45, mag: 1.5, label: 'Piston slap' },
-    { hz: 85, mag: telemetry.vibrationRmsMmS > 4 ? 6.8 : 2.4, label: '1X Crankshaft' },
-    { hz: 170, mag: telemetry.vibrationRmsMmS > 4 ? 4.9 : 1.8, label: '2X Firing freq' },
-    { hz: 255, mag: 1.1, label: '3X Firing' },
-    { hz: 340, mag: 0.7, label: '4X Firing' },
-    { hz: 510, mag: 0.4, label: 'Valve train' },
-    { hz: 1200, mag: 0.9, label: 'Turbo blade pass' },
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPacketCounter(prev => prev + Math.floor(pipelineSpeedHz / 5));
+    }, 200);
+    return () => clearInterval(timer);
+  }, [pipelineSpeedHz]);
+
+  // Complete 22 Live Telemetry SCADA Sensors
+  const scadaSensors = [
+    { name: 'RPM', val: `${telemetry.rpm} RPM`, freq: '100 Hz', qual: '99.8%', status: 'NOMINAL', latency: '2.1 ms', noise: '0.12%', dep: ['MAP', 'Turbo', 'EGT'] },
+    { name: 'MAP (Boost)', val: `${telemetry.mapInHg.toFixed(1)} inHg`, freq: '50 Hz', qual: '99.5%', status: 'NOMINAL', latency: '3.4 ms', noise: '0.24%', dep: ['Turbo', 'EGT'] },
+    { name: 'CHT #1', val: `${telemetry.chtC[0].toFixed(1)} °C`, freq: '20 Hz', qual: '99.1%', status: 'NOMINAL', latency: '4.8 ms', noise: '0.35%', dep: ['Oil Temp', 'RUL'] },
+    { name: 'CHT #2', val: `${telemetry.chtC[1].toFixed(1)} °C`, freq: '20 Hz', qual: '98.6%', status: telemetry.chtC[1] > 125 ? 'WARNING' : 'NOMINAL', latency: '4.9 ms', noise: '0.42%', dep: ['Oil Temp', 'RUL'] },
+    { name: 'CHT #3', val: `${telemetry.chtC[2].toFixed(1)} °C`, freq: '20 Hz', qual: '99.3%', status: 'NOMINAL', latency: '4.7 ms', noise: '0.31%', dep: ['Oil Temp', 'RUL'] },
+    { name: 'CHT #4', val: `${telemetry.chtC[3].toFixed(1)} °C`, freq: '20 Hz', qual: '99.4%', status: 'NOMINAL', latency: '4.6 ms', noise: '0.29%', dep: ['Oil Temp', 'RUL'] },
+    { name: 'EGT #1', val: `${telemetry.egtC[0].toFixed(0)} °C`, freq: '50 Hz', qual: '99.2%', status: 'NOMINAL', latency: '3.1 ms', noise: '0.51%', dep: ['Turbo Temp', 'RUL'] },
+    { name: 'EGT #2', val: `${telemetry.egtC[1].toFixed(0)} °C`, freq: '50 Hz', qual: '98.9%', status: 'NOMINAL', latency: '3.2 ms', noise: '0.48%', dep: ['Turbo Temp', 'RUL'] },
+    { name: 'EGT #3', val: `${telemetry.egtC[2].toFixed(0)} °C`, freq: '50 Hz', qual: '97.8%', status: telemetry.egtC[2] > 780 ? 'WARNING' : 'NOMINAL', latency: '3.3 ms', noise: '0.85%', dep: ['Turbo Temp', 'RUL'] },
+    { name: 'EGT #4', val: `${telemetry.egtC[3].toFixed(0)} °C`, freq: '50 Hz', qual: '99.1%', status: 'NOMINAL', latency: '3.1 ms', noise: '0.44%', dep: ['Turbo Temp', 'RUL'] },
+    { name: 'Oil Pressure', val: `${telemetry.oilPressureBar.toFixed(2)} bar`, freq: '50 Hz', qual: '99.9%', status: 'NOMINAL', latency: '2.8 ms', noise: '0.18%', dep: ['Bearing Wear'] },
+    { name: 'Oil Temperature', val: `${telemetry.oilTempC.toFixed(1)} °C`, freq: '20 Hz', qual: '99.5%', status: 'NOMINAL', latency: '5.2 ms', noise: '0.22%', dep: ['Viscosity', 'RUL'] },
+    { name: 'Fuel Flow', val: `${telemetry.fuelFlowLitersHr.toFixed(1)} L/h`, freq: '20 Hz', qual: '99.0%', status: 'NOMINAL', latency: '4.1 ms', noise: '0.30%', dep: ['Endurance'] },
+    { name: 'Fuel Pressure', val: `${(telemetry.oilPressureBar * 0.7).toFixed(2)} bar`, freq: '20 Hz', qual: '99.4%', status: 'NOMINAL', latency: '4.2 ms', noise: '0.25%', dep: ['Injector'] },
+    { name: 'Battery Voltage', val: `${telemetry.batteryVoltageV.toFixed(1)} V`, freq: '10 Hz', qual: '100%', status: 'NOMINAL', latency: '8.1 ms', noise: '0.05%', dep: ['ECU Power'] },
+    { name: 'Alternator Current', val: `28.4 A`, freq: '10 Hz', qual: '99.9%', status: 'NOMINAL', latency: '8.2 ms', noise: '0.09%', dep: ['Avionics'] },
+    { name: 'Turbo Boost', val: `${telemetry.turboBoostBar.toFixed(2)} bar`, freq: '50 Hz', qual: '99.3%', status: 'NOMINAL', latency: '3.0 ms', noise: '0.38%', dep: ['Compressor'] },
+    { name: 'Turbo RPM', val: `${telemetry.turbochargerRpm.toLocaleString()} RPM`, freq: '100 Hz', qual: '98.7%', status: 'NOMINAL', latency: '1.9 ms', noise: '0.62%', dep: ['Boost'] },
+    { name: 'Ambient Air Temp', val: `${telemetry.ambientTempC} °C`, freq: '5 Hz', qual: '100%', status: 'NOMINAL', latency: '12 ms', noise: '0.02%', dep: ['Air Density'] },
+    { name: 'Ambient Pressure', val: `${telemetry.ambientPressureHpa.toFixed(0)} hPa`, freq: '5 Hz', qual: '100%', status: 'NOMINAL', latency: '12 ms', noise: '0.01%', dep: ['ISA Alt'] },
+    { name: 'GPS Altitude', val: `${telemetry.gpsAltitudeM} m`, freq: '10 Hz', qual: '99.7%', status: 'NOMINAL', latency: '15 ms', noise: '0.15%', dep: ['Density Alt'] },
+    { name: 'Throttle Position', val: `${telemetry.throttlePercent.toFixed(0)} %`, freq: '100 Hz', qual: '100%', status: 'NOMINAL', latency: '1.2 ms', noise: '0.04%', dep: ['Engine Load'] },
   ];
 
-  // Dynamic calculations derived from live telemetry values
-  const maxCht = Math.max(...telemetry.chtC);
-  const minCht = Math.min(...telemetry.chtC);
-  const avgCht = (telemetry.chtC.reduce((a, b) => a + b, 0) / telemetry.chtC.length);
-  const chtDisparity = maxCht - minCht;
-  const maxChtCylIdx = telemetry.chtC.indexOf(maxCht) + 1;
-
-  const maxEgt = Math.max(...telemetry.egtC);
-  const avgEgt = (telemetry.egtC.reduce((a, b) => a + b, 0) / telemetry.egtC.length);
-
-  const thermalStressScore = Math.min(100, Math.max(0, ((maxCht - 100) / 45) * 60 + (chtDisparity / 20) * 40));
-  const coolingEfficiencyPercent = Math.max(70, Math.min(100, 100 - (telemetry.oilTempC - 95) * 0.8 - (telemetry.coolantTempC - 90) * 0.5));
-  
-  const lubricationHealthScore = Math.min(100, Math.max(0, (telemetry.oilPressureBar / 4.5) * 70 + (1 - (telemetry.oilTempC - 100) / 40) * 30));
-  const fuelEfficiencyLp100km = Number(((telemetry.fuelFlowLitersHr / 180) * 100).toFixed(1));
-  const estimatedEnduranceHours = Number((selectedUav.fuelRemainingKg / (telemetry.fuelFlowLitersHr * 0.8)).toFixed(1));
-
-  const totalVibRms = telemetry.vibrationRmsMmS;
-  const dominantFreqHz = totalVibRms > 4 ? 85 : 30;
-  const bearingHealthScore = Math.max(60, Math.min(100, 100 - (totalVibRms - 2.0) * 12));
+  const scadaPipelineNodes = [
+    { title: 'Sensors (22)', desc: 'Piezo & Thermocouples' },
+    { title: 'CAN Bus', desc: '1 Mbps Differential' },
+    { title: 'Rotax ECU', desc: 'Dual Ignition Control' },
+    { title: 'Flight Controller', desc: 'ArduPilot/PX4 Autopilot' },
+    { title: 'Ground Radio', desc: 'C-Band Telemetry Link' },
+    { title: 'UDP Receiver', desc: 'Port 4000 Stream' },
+    { title: 'GCS SCADA', desc: 'Telemetry Parser' },
+    { title: 'Validation', desc: 'CRC & Kalman Filter' },
+    { title: 'Physics Engine', desc: 'Thermodynamics' },
+    { title: 'AI Model', desc: 'RUL & SHAP Predictor' },
+    { title: 'Digital Twin', desc: '3D FEA Shader View' },
+  ];
 
   return (
-    <div className="p-4 space-y-4 max-w-[1920px] mx-auto">
-      {/* Top Header Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
+    <div className="p-4 space-y-4 max-w-[1920px] mx-auto font-mono-code text-xs">
+      {/* Header Banner */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
+            <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
             <h1 className="font-heading font-bold text-xl text-slate-100">
-              Real-Time SCADA Telemetry & Sensor Instrumentation
+              DRDO SCADA Real-Time Telemetry Pipeline &amp; Signal Validator
             </h1>
-            <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 text-[10px] font-mono-code font-bold">
-              20 HZ SYNC
+            <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold text-[10px]">
+              20–100 HZ STREAM LIVE
             </span>
           </div>
-          <p className="text-xs font-mono-code text-slate-400 mt-0.5">
-            Rotax 914 Turbocharged Aero Piston Engine • 4-Stroke Opposed-4 Cylinders • Altitude: {selectedUav.altitudeFt.toLocaleString()} FT
+          <p className="text-slate-400 text-xs mt-0.5">
+            Synchronized CAN-bus sensor telemetry stream, Kalman filtering, CRC error verification &amp; sensor dependency graphs
           </p>
         </div>
 
-        {/* Subsystem Workstation Pills */}
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono-code">
-          {(['ALL', 'THERMAL', 'HYDRAULIC', 'VIBRATION', 'TURBO'] as const).map((filter) => (
+        <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+          <span className="text-slate-400 text-[11px] font-bold">STREAM RATE:</span>
+          {[20, 50, 100].map(rate => (
             <button
-              key={filter}
-              onClick={() => setSelectedSubsystem(filter)}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                selectedSubsystem === filter
-                  ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-900/40'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              key={rate}
+              onClick={() => setPipelineSpeedHz(rate)}
+              className={`px-2.5 py-1 rounded font-bold transition-all ${
+                pipelineSpeedHz === rate ? 'bg-cyan-600 text-white shadow-md' : 'bg-slate-900 text-slate-400 hover:text-white'
               }`}
             >
-              {filter} WORKSTATION
+              {rate} Hz
             </button>
           ))}
         </div>
       </div>
 
-      {/* Primary Telemetry Instrument Cluster */}
-      <div id="telemetry-gauges" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Gauge
-          label="ENGINE RPM"
-          value={telemetry.rpm}
-          min={1500}
-          max={6000}
-          unit="RPM"
-          warningThreshold={5500}
-          criticalThreshold={5800}
-          expectedValue={5100}
-        />
-        <Gauge
-          label="MANIFOLD PRESS."
-          value={telemetry.manifoldPressureInHg}
-          min={20}
-          max={42}
-          unit="inHg"
-          decimals={1}
-          warningThreshold={37.5}
-          criticalThreshold={39.0}
-          expectedValue={35.8}
-        />
-        <Gauge
-          label="OIL PRESSURE"
-          value={telemetry.oilPressureBar}
-          min={1.0}
-          max={6.0}
-          unit="bar"
-          decimals={2}
-          warningThreshold={2.2}
-          criticalThreshold={1.8}
-          expectedValue={4.35}
-        />
-        <Gauge
-          label="OIL TEMP"
-          value={telemetry.oilTempC}
-          min={60}
-          max={140}
-          unit="°C"
-          decimals={1}
-          warningThreshold={118}
-          criticalThreshold={128}
-          expectedValue={106.0}
-        />
-        <Gauge
-          label="COOLANT TEMP"
-          value={telemetry.coolantTempC}
-          min={60}
-          max={130}
-          unit="°C"
-          decimals={1}
-          warningThreshold={110}
-          criticalThreshold={118}
-          expectedValue={98.0}
-        />
-        <Gauge
-          label="TURBO BOOST"
-          value={telemetry.turboBoostBar}
-          min={0.0}
-          max={1.4}
-          unit="bar"
-          decimals={2}
-          warningThreshold={1.15}
-          criticalThreshold={1.28}
-          expectedValue={0.88}
-        />
+      {/* SCADA Data Quality Metrics Row */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+          <span className="text-slate-500 text-[10px] block font-bold">TOTAL SCADA PACKETS</span>
+          <span className="font-telemetry font-bold text-lg text-cyan-400">{packetCounter.toLocaleString()}</span>
+          <span className="text-[10px] text-emerald-400 block mt-0.5">0 Dropped Frames</span>
+        </div>
+        <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+          <span className="text-slate-500 text-[10px] block font-bold">SIGNAL QUALITY</span>
+          <span className="font-telemetry font-bold text-lg text-emerald-400">99.82%</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">SNR &gt; 38 dB</span>
+        </div>
+        <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+          <span className="text-slate-500 text-[10px] block font-bold">AVERAGE LATENCY</span>
+          <span className="font-telemetry font-bold text-lg text-slate-100">3.12 ms</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">C-Band UDP Sync</span>
+        </div>
+        <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+          <span className="text-slate-500 text-[10px] block font-bold">CRC ERRORS</span>
+          <span className="font-telemetry font-bold text-lg text-emerald-400">0.000%</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">Polynomial 0x04C11DB7</span>
+        </div>
+        <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+          <span className="text-slate-500 text-[10px] block font-bold">CLOCK DRIFT</span>
+          <span className="font-telemetry font-bold text-lg text-indigo-400">&lt; 0.04 ms</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">NTP GCS Synchronization</span>
+        </div>
+        <div className="bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+          <span className="text-slate-500 text-[10px] block font-bold">ACTIVE FILTER</span>
+          <span className="font-telemetry font-bold text-lg text-amber-400">{filterMode}</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">Noise Suppression</span>
+        </div>
       </div>
 
-      {/* WORKSPACE 1: ALL SUMMARY */}
-      {selectedSubsystem === 'ALL' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left 6 Cols: 4-Cylinder Head & Exhaust Gas Temperatures */}
-            <div className="lg:col-span-6 bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-orange-400" />
-                  <h3 className="font-heading font-bold text-sm text-slate-100">
-                    4-Cylinder Thermal Head (CHT) & Exhaust (EGT) Spectrum
-                  </h3>
-                </div>
-                <span className="text-[10px] font-mono-code text-slate-400">TYPE-K THERMOCOUPLES</span>
+      {/* Animated SCADA Data Flow Architecture Graph */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading font-bold text-sm text-slate-200 flex items-center gap-2">
+            <Network className="w-4 h-4 text-cyan-400" />
+            <span>DRDO LIVE TELEMETRY DATA PIPELINE FLOW (SENSORS → AI &amp; DIGITAL TWIN)</span>
+          </h3>
+          <span className="text-[10px] text-slate-400 font-mono-code">UPDATES REAL-TIME OVER UDP PACKETS</span>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 overflow-x-auto py-2">
+          {scadaPipelineNodes.map((node, idx) => (
+            <React.Fragment key={idx}>
+              <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-center min-w-[120px] flex-1 hover:border-cyan-500 transition-all cursor-pointer">
+                <span className="text-[10px] font-bold text-cyan-400 block">{node.title}</span>
+                <span className="text-[9px] text-slate-400 block mt-0.5">{node.desc}</span>
               </div>
+              {idx < scadaPipelineNodes.length - 1 && (
+                <span className="text-cyan-500 font-bold animate-pulse text-xs">➔</span>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[0, 1, 2, 3].map((idx) => {
-                  const rawCht = telemetry.chtC[idx];
-                  const cht = typeof rawCht === 'number' ? Number(rawCht.toFixed(1)) : rawCht;
-                  const rawEgt = telemetry.egtC[idx];
-                  const egt = typeof rawEgt === 'number' ? Math.round(rawEgt) : rawEgt;
-                  const isHot = (typeof cht === 'number' && cht > 125) || (typeof egt === 'number' && egt > 820);
-
-                  return (
-                    <div
-                      key={idx}
-                      className={`p-3 rounded-xl border flex flex-col justify-between text-xs font-mono-code transition-all ${
-                        isHot ? 'bg-red-950/30 border-red-800' : 'bg-slate-950/80 border-slate-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-bold text-cyan-300 pb-1 border-b border-slate-800/60">
-                        <span>CYLINDER #{idx + 1}</span>
-                        <span className={`w-2 h-2 rounded-full ${isHot ? 'bg-red-500 animate-ping' : 'bg-emerald-400'}`} />
-                      </div>
-
-                      <div className="py-2 space-y-2">
-                        <div>
-                          <span className="text-[10px] text-slate-500 block">CYL HEAD TEMP</span>
-                          <span className={`font-telemetry font-bold text-xl ${typeof cht === 'number' && cht > 125 ? 'text-red-400' : 'text-slate-100'}`}>
-                            {cht}°C
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-500 block">EXHAUST GAS</span>
-                          <span className={`font-telemetry font-bold text-lg ${typeof egt === 'number' && egt > 820 ? 'text-red-400' : 'text-slate-200'}`}>
-                            {egt}°C
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="pt-1 border-t border-slate-800/60 text-[9px] text-slate-500 flex justify-between">
-                        <span>MAX: 135°C</span>
-                        <span>MAX: 850°C</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-3 p-3 rounded-xl bg-slate-950/90 border border-slate-800/80 flex items-center justify-between text-xs font-mono-code text-slate-400">
-                <span>Bank 1 vs Bank 2 Disparity: <strong className="text-emerald-400">+{chtDisparity.toFixed(1)}°C (NOMINAL)</strong></span>
-                <span>Lambda Ratio: <strong className="text-cyan-300">λ {telemetry.lambdaAirFuelRatio.toFixed(2)}</strong></span>
-              </div>
-            </div>
-
-            {/* Right 6 Cols: Vibration Harmonic FFT Spectrum Analyzer */}
-            <div className="lg:col-span-6 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-cyan-400" />
-                  <h3 className="font-heading font-bold text-sm text-slate-100">
-                    Piezoelectric Vibration FFT Spectrum Analyzer
-                  </h3>
-                </div>
-                <span className="text-[10px] font-mono-code text-cyan-400">SAMPLING: 10 kHz</span>
-              </div>
-
-              {/* Harmonic Bar Graph */}
-              <div className="space-y-2">
-                {fftBins.map((bin, i) => (
-                  <div key={i} className="flex items-center gap-3 text-xs font-mono-code">
-                    <span className="w-14 text-slate-400 shrink-0 text-right">{bin.hz} Hz</span>
-                    <div className="flex-1 bg-slate-950 h-4 rounded-md overflow-hidden p-0.5 border border-slate-800 flex">
-                      <div
-                        className={`h-full rounded transition-all duration-300 ${
-                          bin.mag > 5 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-cyan-500 to-blue-500'
-                        }`}
-                        style={{ width: `${Math.min(100, (bin.mag / 8) * 100)}%` }}
-                      />
-                    </div>
-                    <span className="w-16 font-bold text-slate-200 text-right">{bin.mag.toFixed(1)} mm/s</span>
-                    <span className="w-28 text-[10px] text-slate-500 truncate">{bin.label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-xs font-mono-code">
-                <span className="text-slate-400">Total RMS Vibration: <strong className="text-cyan-300">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</strong></span>
-                <span className="text-slate-400">ISO 10816 Class: <strong className={totalVibRms > 4 ? 'text-amber-400' : 'text-emerald-400'}>{totalVibRms > 4 ? 'CLASS II (ELEVATED)' : 'CLASS I (ACCEPTABLE)'}</strong></span>
-              </div>
-            </div>
+      {/* Main 22-Sensor Grid & Selected Sensor Inspector */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left: 22 SCADA Live Sensors Table */}
+        <div className="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h3 className="font-heading font-bold text-sm text-slate-200 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span>LIVE SENSOR STREAM MATRIX (22 ACQUISITION NODES)</span>
+            </h3>
+            <span className="text-[10px] text-slate-400 font-bold">CLICK SENSOR FOR DEPENDENCY GRAPH</span>
           </div>
 
-          {/* Integrated Multi-System Explainable AI Diagnostic Center */}
-          <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <div className="flex items-center gap-2">
-                <Brain className="w-5 h-5 text-cyan-400 animate-pulse" />
-                <h3 className="font-heading font-bold text-base text-slate-100">Integrated Multi-Subsystem Explainable AI Copilot</h3>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-mono-code">
-                <span className="text-slate-400">AI Confidence: <strong className="text-emerald-400">97.4%</strong></span>
-                <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800 font-bold">18 SENSORS VERIFIED</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono-code">
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                <div className="flex items-center gap-2 text-cyan-400 font-bold">
-                  <Flame className="w-4 h-4" />
-                  <span>THERMAL DIAGNOSTIC</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[580px] overflow-y-auto pr-1">
+            {scadaSensors.map((s) => {
+              const isSelected = selectedSensorNode === s.name;
+              return (
+                <div
+                  key={s.name}
+                  onClick={() => setSelectedSensorNode(s.name)}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    isSelected
+                      ? 'bg-cyan-950/80 border-cyan-500 shadow-lg shadow-cyan-950/50'
+                      : s.status === 'WARNING'
+                      ? 'bg-rose-950/40 border-rose-800 hover:bg-rose-900/40'
+                      : 'bg-slate-950/60 border-slate-800 hover:bg-slate-900 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-slate-200">{s.name}</span>
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                      s.status === 'WARNING' ? 'bg-rose-900 text-rose-300' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                    }`}>
+                      {s.freq}
+                    </span>
+                  </div>
+                  <div className="font-telemetry font-bold text-base text-slate-100 mt-1">{s.val}</div>
+                  <div className="flex items-center justify-between text-[9px] text-slate-400 mt-1 pt-1 border-t border-slate-800/80">
+                    <span>Quality: <strong className="text-emerald-400">{s.qual}</strong></span>
+                    <span>Latency: <strong>{s.latency}</strong></span>
+                  </div>
                 </div>
-                <p className="text-slate-300">
-                  Highest thermal dissipation localized on Cylinder #{maxChtCylIdx} at {maxCht.toFixed(1)}°C. Cylinder head disparity is {chtDisparity.toFixed(1)}°C. Cooling loop running at {coolingEfficiencyPercent.toFixed(0)}% efficiency.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                <div className="flex items-center gap-2 text-indigo-400 font-bold">
-                  <Droplets className="w-4 h-4" />
-                  <span>HYDRAULIC DIAGNOSTIC</span>
-                </div>
-                <p className="text-slate-300">
-                  Oil pressure baseline stable at {telemetry.oilPressureBar.toFixed(2)} bar. Fuel flow rate is {telemetry.fuelFlowLitersHr.toFixed(1)} L/h with fuel endurance estimated at {estimatedEnduranceHours} hours.
-                </p>
-              </div>
-
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                  <Activity className="w-4 h-4" />
-                  <span>VIBRATION DIAGNOSTIC</span>
-                </div>
-                <p className="text-slate-300">
-                  Dominant mechanical vibration peak at {dominantFreqHz} Hz with RMS of {totalVibRms.toFixed(2)} mm/s. Bearing health confidence index evaluated at {bearingHealthScore.toFixed(0)}%.
-                </p>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
-      )}
 
-      {/* WORKSPACE 2: THERMAL INTELLIGENCE CENTER */}
-      {selectedSubsystem === 'THERMAL' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-            {/* Header Banner */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <Flame className="w-6 h-6 text-orange-400 animate-pulse" />
-                <div>
-                  <h2 className="font-heading font-bold text-lg text-slate-100">Thermal Engineering Intelligence Center</h2>
-                  <p className="text-xs font-mono-code text-slate-400">Continuous Heat Dissipation • Type-K Thermocouples • Cylinder Thermal Gradient & Cooling Efficiency</p>
+        {/* Right: Selected Sensor Health & Mathematical Dependency Inspector */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <h3 className="font-heading font-bold text-sm text-cyan-400 flex items-center gap-2 border-b border-slate-800 pb-2">
+              <Cpu className="w-4 h-4 text-cyan-400" />
+              <span>SENSOR HEALTH &amp; DEPENDENCY INSPECTOR</span>
+            </h3>
+
+            {selectedSensorNode ? (
+              <div className="space-y-3 text-xs">
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+                  <span className="text-slate-500 text-[10px] block font-bold uppercase">SELECTED SCADA NODE</span>
+                  <div className="text-lg font-bold text-slate-100">{selectedSensorNode}</div>
+                  <p className="text-[11px] text-slate-400">
+                    Direct signal feed linked into Physics Thermodynamics &amp; Deep Neural AI Predictor.
+                  </p>
                 </div>
-              </div>
-              <span className="px-3 py-1 rounded bg-orange-950/80 border border-orange-500/40 text-orange-300 text-xs font-mono-code font-bold">
-                THERMAL WORKSTATION ONLINE
-              </span>
-            </div>
 
-            {/* Section 2: Live Engineering Analytics Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
-                <span className="text-[10px] font-mono-code text-slate-400 block">PEAK CHT TEMP</span>
-                <span className="text-2xl font-bold font-telemetry text-amber-300">{maxCht.toFixed(1)}°C</span>
-                <span className="text-[10px] font-mono-code text-slate-500 block mt-1">Cylinder #{maxChtCylIdx}</span>
-              </div>
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
-                <span className="text-[10px] font-mono-code text-slate-400 block">CYLINDER IMPRECISION / DISPARITY</span>
-                <span className="text-2xl font-bold font-telemetry text-cyan-300">+{chtDisparity.toFixed(1)}°C</span>
-                <span className="text-[10px] font-mono-code text-emerald-400 block mt-1">NOMINAL (MAX 25°C)</span>
-              </div>
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
-                <span className="text-[10px] font-mono-code text-slate-400 block">COOLING LOOP EFFICIENCY</span>
-                <span className="text-2xl font-bold font-telemetry text-emerald-400">{coolingEfficiencyPercent.toFixed(1)}%</span>
-                <span className="text-[10px] font-mono-code text-slate-500 block mt-1">Radiant Oil & Coolant Heat Sink</span>
-              </div>
-              <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
-                <span className="text-[10px] font-mono-code text-slate-400 block">THERMAL STRESS INDEX</span>
-                <span className="text-2xl font-bold font-telemetry text-orange-400">{thermalStressScore.toFixed(0)} / 100</span>
-                <span className="text-[10px] font-mono-code text-slate-500 block mt-1">Combustion Chamber Load</span>
-              </div>
-            </div>
-
-            {/* Cylinder Heat Matrix */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[0, 1, 2, 3].map((idx) => {
-                const cht = Number(telemetry.chtC[idx].toFixed(1));
-                const egt = Math.round(telemetry.egtC[idx]);
-                const isHot = cht > 125 || egt > 820;
-                return (
-                  <div key={idx} className={`p-4 rounded-xl border transition-all ${isHot ? 'bg-red-950/30 border-red-800' : 'bg-slate-950 border-slate-800'}`}>
-                    <div className="flex justify-between items-center text-xs font-mono-code text-cyan-300 font-bold border-b border-slate-800 pb-1.5 mb-3">
-                      <span>CYLINDER #{idx + 1}</span>
-                      <span className={`w-2 h-2 rounded-full ${isHot ? 'bg-red-500 animate-ping' : 'bg-emerald-400'}`} />
-                    </div>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-[10px] text-slate-400 font-mono-code block">CYL HEAD TEMP (CHT)</span>
-                        <span className={`text-2xl font-bold font-telemetry ${cht > 125 ? 'text-red-400' : 'text-slate-100'}`}>{cht}°C</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 font-mono-code block">EXHAUST GAS TEMP (EGT)</span>
-                        <span className={`text-xl font-bold font-telemetry ${egt > 820 ? 'text-red-400' : 'text-amber-300'}`}>{egt}°C</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden mt-3">
-                      <div className="h-full bg-gradient-to-r from-cyan-500 via-amber-500 to-red-500" style={{ width: `${Math.min(100, (cht / 150) * 100)}%` }} />
-                    </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block">SIGNAL NOISE</span>
+                    <span className="font-telemetry font-bold text-emerald-400">
+                      {scadaSensors.find(s => s.name === selectedSensorNode)?.noise || '0.12%'}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Section 3: Explainable AI (XAI) Thermal Diagnostic Panel */}
-            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3 font-mono-code text-xs">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <div className="flex items-center gap-2 text-orange-400 font-bold">
-                  <Brain className="w-4 h-4" />
-                  <span>EXPLAINABLE AI (XAI) THERMAL DIAGNOSTIC REPORT</span>
-                </div>
-                <span className="text-slate-400">Confidence: <strong className="text-emerald-400">96.8%</strong> (Based on 6 Thermocouples)</span>
-              </div>
-
-              <div className="space-y-2 text-slate-300 leading-relaxed">
-                <p>
-                  <strong>WHAT:</strong> Thermal gradient analysis indicates localized thermal dissipation peaking on <span className="text-amber-300">Cylinder #{maxChtCylIdx}</span> at <strong>{maxCht.toFixed(1)}°C</strong> with average CHT at <strong>{avgCht.toFixed(1)}°C</strong>.
-                </p>
-                <p>
-                  <strong>WHY:</strong> Exhaust gas temperature on Bank {maxChtCylIdx <= 2 ? 1 : 2} is running at <strong>{maxEgt}°C</strong>, reflecting nominal air-fuel ratio stoichiometry (λ {telemetry.lambdaAirFuelRatio.toFixed(2)}).
-                </p>
-                <p>
-                  <strong>MISSION IMPACT:</strong> <span className="text-emerald-400 font-bold">ZERO MISSION RISK</span>. Cylinder head temperature remains <strong>{(135 - maxCht).toFixed(1)}°C</strong> below redline limit.
-                </p>
-                <p>
-                  <strong>RECOMMENDED OPERATOR ACTION:</strong> Maintain current cruise throttle position ({telemetry.throttlePercent.toFixed(1)}%). No thermal trim adjustment required.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* WORKSPACE 3: HYDRAULIC INTELLIGENCE CENTER */}
-      {selectedSubsystem === 'HYDRAULIC' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-            {/* Header Banner */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <Droplets className="w-6 h-6 text-cyan-400 animate-pulse" />
-                <div>
-                  <h2 className="font-heading font-bold text-lg text-slate-100">Hydraulic & Lubrication Intelligence Center</h2>
-                  <p className="text-xs font-mono-code text-slate-400">Oil & Fuel Line Hydraulics • Pump Pressure Stability • Viscosity Degradation & Endurance Modeling</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-mono-code font-bold">
-                HYDRAULIC WORKSTATION ONLINE
-              </span>
-            </div>
-
-            {/* Section 2: Live Engineering Analytics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">LUBRICATION HEALTH INDEX</span>
-                <p className="text-3xl font-bold font-telemetry text-cyan-300">{lubricationHealthScore.toFixed(1)}%</p>
-                <span className="text-[10px] font-mono-code text-emerald-400 block">NOMINAL OIL FILM VISCOSITY</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">FUEL FLOW CONSUMPTION</span>
-                <p className="text-3xl font-bold font-telemetry text-emerald-300">{telemetry.fuelFlowLitersHr.toFixed(1)} <span className="text-sm font-normal text-slate-400">L/h</span></p>
-                <span className="text-[10px] font-mono-code text-slate-400 block">INJECTOR DUTY CYCLE: 64.2%</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">REMAINING FUEL ENDURANCE</span>
-                <p className="text-3xl font-bold font-telemetry text-amber-300">{estimatedEnduranceHours} <span className="text-sm font-normal text-slate-400">HOURS</span></p>
-                <span className="text-[10px] font-mono-code text-amber-400 block">{selectedUav.fuelRemainingKg.toFixed(1)} kg UNUSABLE / USABLE TANK</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">OIL LINE PRESSURE</span>
-                <p className="text-3xl font-bold font-telemetry text-slate-100">{telemetry.oilPressureBar.toFixed(2)} <span className="text-sm font-normal text-slate-400">bar</span></p>
-                <span className="text-[10px] font-mono-code text-emerald-400 block">PRESSURE STABILITY: 99.4%</span>
-              </div>
-            </div>
-
-            {/* Section 3: Explainable AI (XAI) Hydraulic Diagnostic Panel */}
-            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3 font-mono-code text-xs">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <div className="flex items-center gap-2 text-cyan-400 font-bold">
-                  <Brain className="w-4 h-4" />
-                  <span>EXPLAINABLE AI (XAI) HYDRAULIC & LUBRICATION REPORT</span>
-                </div>
-                <span className="text-slate-400">Confidence: <strong className="text-emerald-400">98.2%</strong></span>
-              </div>
-
-              <div className="space-y-2 text-slate-300 leading-relaxed">
-                <p>
-                  <strong>WHAT:</strong> Oil pressure is holding stable at <strong>{telemetry.oilPressureBar.toFixed(2)} bar</strong> with oil temperature steady at <strong>{telemetry.oilTempC.toFixed(1)}°C</strong>.
-                </p>
-                <p>
-                  <strong>WHY:</strong> Lubrication pump RPM is synchronised with engine crankshaft speed ({telemetry.rpm} RPM). Hydraulic cavitation probability is <strong>0.02%</strong>.
-                </p>
-                <p>
-                  <strong>LEAK DETECTION:</strong> Zero fuel line or oil pan pressure drops detected over the last 15 minutes of live telemetry streaming.
-                </p>
-                <p>
-                  <strong>RECOMMENDED OPERATOR ACTION:</strong> No hydraulic intervention required. Maintain current flight altitude.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* WORKSPACE 4: VIBRATION INTELLIGENCE CENTER */}
-      {selectedSubsystem === 'VIBRATION' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-            {/* Header Banner */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <Activity className="w-6 h-6 text-indigo-400 animate-pulse" />
-                <div>
-                  <h2 className="font-heading font-bold text-lg text-slate-100">Vibration & Structural Dynamics Intelligence Center</h2>
-                  <p className="text-xs font-mono-code text-slate-400">Piezoelectric Accelerometer Decomposition • 10 kHz FFT Sampling • Bearing & Shaft Imbalance Detection</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 rounded bg-indigo-950/80 border border-indigo-500/40 text-indigo-300 text-xs font-mono-code font-bold">
-                10 kHz FFT SAMPLING ONLINE
-              </span>
-            </div>
-
-            {/* Section 2: Live Engineering Analytics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">TOTAL RMS VIBRATION</span>
-                <p className="text-3xl font-bold font-telemetry text-cyan-300">{totalVibRms.toFixed(2)} <span className="text-sm font-normal text-slate-400">mm/s</span></p>
-                <span className="text-[10px] font-mono-code text-emerald-400 block">ISO 10816 CLASS I (ACCEPTABLE)</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">BEARING HEALTH INDEX</span>
-                <p className="text-3xl font-bold font-telemetry text-emerald-300">{bearingHealthScore.toFixed(0)}%</p>
-                <span className="text-[10px] font-mono-code text-slate-400 block">MAIN JOURNAL BEARINGS OK</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">DOMINANT HARMONIC PEAK</span>
-                <p className="text-3xl font-bold font-telemetry text-indigo-300">{dominantFreqHz} <span className="text-sm font-normal text-slate-400">Hz</span></p>
-                <span className="text-[10px] font-mono-code text-slate-400 block">1X CRANKSHAFT ROTATIONAL FREQ</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">RESONANCE MARGIN</span>
-                <p className="text-3xl font-bold font-telemetry text-slate-100">38.4 <span className="text-sm font-normal text-slate-400">Hz</span></p>
-                <span className="text-[10px] font-mono-code text-emerald-400 block font-bold">AIRFRAME CRITICAL FREQ SAFE</span>
-              </div>
-            </div>
-
-            {/* FFT Spectrum Display */}
-            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
-              <span className="text-xs font-mono-code font-bold text-slate-300 block border-b border-slate-800 pb-2">
-                FFT HARMONIC FREQUENCY SPECTRUM (15 Hz - 1200 Hz)
-              </span>
-              <div className="space-y-2.5">
-                {fftBins.map((bin, i) => (
-                  <div key={i} className="flex items-center gap-4 text-xs font-mono-code">
-                    <span className="w-16 font-bold text-cyan-400">{bin.hz} Hz</span>
-                    <div className="flex-1 bg-slate-900 h-5 rounded overflow-hidden p-0.5 border border-slate-800 flex">
-                      <div
-                        className={`h-full rounded transition-all duration-300 ${
-                          bin.mag > 5 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-cyan-500 to-blue-500'
-                        }`}
-                        style={{ width: `${Math.min(100, (bin.mag / 8) * 100)}%` }}
-                      />
-                    </div>
-                    <span className="w-20 font-bold text-slate-100 text-right">{bin.mag.toFixed(2)} mm/s</span>
-                    <span className="w-36 text-slate-400 truncate">{bin.label}</span>
+                  <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                    <span className="text-slate-500 text-[10px] block font-bold">CALIBRATION</span>
+                    <span className="font-telemetry font-bold text-slate-200">VERIFIED ADE-2026</span>
                   </div>
+                </div>
+
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                  <span className="text-slate-400 font-bold text-[10px] uppercase block">DOWNSTREAM DEPENDENCY CHAIN:</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2 py-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">
+                      {selectedSensorNode}
+                    </span>
+                    <span className="text-slate-500 font-bold">➔</span>
+                    {scadaSensors.find(s => s.name === selectedSensorNode)?.dep.map((d, i) => (
+                      <React.Fragment key={d}>
+                        <span className="px-2 py-1 rounded bg-slate-900 text-slate-200 border border-slate-700 font-bold">
+                          {d}
+                        </span>
+                        {i < (scadaSensors.find(s => s.name === selectedSensorNode)?.dep.length || 0) - 1 && (
+                          <span className="text-slate-500 font-bold">➔</span>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 text-center text-slate-500">Select any sensor on the left matrix to view dependency graph.</div>
+            )}
+          </div>
+
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-heading font-bold text-xs text-slate-300 uppercase">
+                ACTIVE MATHEMATICAL FILTERING
+              </h4>
+              <div className="flex gap-1">
+                {(['KALMAN', 'EMA', 'MEDIAN', 'RAW'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => setFilterMode(mode)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      filterMode === mode ? 'bg-amber-600 text-white' : 'bg-slate-950 text-slate-400'
+                    }`}
+                  >
+                    {mode}
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Section 3: Explainable AI (XAI) Vibration Diagnostic Panel */}
-            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3 font-mono-code text-xs">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <div className="flex items-center gap-2 text-indigo-400 font-bold">
-                  <Brain className="w-4 h-4" />
-                  <span>EXPLAINABLE AI (XAI) HARMONIC VIBRATION REPORT</span>
-                </div>
-                <span className="text-slate-400">Confidence: <strong className="text-emerald-400">97.9%</strong></span>
+            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1 font-mono-code text-[11px] text-slate-300">
+              <div className="text-amber-400 font-bold">
+                {filterMode === 'KALMAN' && 'x_k = x̂_k^- + K_k (z_k - H x̂_k^-)'}
+                {filterMode === 'EMA' && 'S_t = α · Y_t + (1 - α) · S_{t-1}'}
+                {filterMode === 'MEDIAN' && 'Y_t = median(X_{t-k}, ..., X_{t+k})'}
+                {filterMode === 'RAW' && 'Y_t = SCADA_Unfiltered_Raw(t)'}
               </div>
-
-              <div className="space-y-2 text-slate-300 leading-relaxed">
-                <p>
-                  <strong>WHAT:</strong> Piezoelectric FFT spectral decomposition shows RMS vibration amplitude of <strong>{totalVibRms.toFixed(2)} mm/s</strong>.
-                </p>
-                <p>
-                  <strong>HARMONIC ETIOLOGY:</strong> Dominant peak occurs at <strong>{dominantFreqHz} Hz</strong> corresponding to 1X crankshaft rotational frequency ({telemetry.rpm} RPM / 60). No shaft imbalance or bearing race pitting detected.
-                </p>
-                <p>
-                  <strong>ISO 10816 ASSESSMENT:</strong> Vibration magnitude remains within Class I acceptable operating envelope.
-                </p>
-              </div>
+              <p className="text-[10px] text-slate-400 mt-1">
+                Removes high-frequency CAN-bus noise &amp; outlier spikes before feeding Physics Thermodynamics &amp; SHAP XAI predictors.
+              </p>
             </div>
           </div>
         </div>
-      )}
-
-      {/* WORKSPACE 5: TURBO INTELLIGENCE CENTER */}
-      {selectedSubsystem === 'TURBO' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-            {/* Header Banner */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-3">
-                <Wind className="w-6 h-6 text-blue-400 animate-pulse" />
-                <div>
-                  <h2 className="font-heading font-bold text-lg text-slate-100">Turbocharger & Intake Compression Intelligence Center</h2>
-                  <p className="text-xs font-mono-code text-slate-400">Rotax 914 Impeller Aerodynamics • Wastegate Duty Cycle • Air Intake Mass Flow Compression</p>
-                </div>
-              </div>
-              <span className="px-3 py-1 rounded bg-blue-950/80 border border-blue-500/40 text-blue-300 text-xs font-mono-code font-bold">
-                TURBO WORKSTATION ONLINE
-              </span>
-            </div>
-
-            {/* Section 2: Live Engineering Analytics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">IMPELLER SPEED</span>
-                <p className="text-3xl font-bold font-telemetry text-blue-300">{telemetry.turbochargerRpm.toLocaleString()} <span className="text-sm font-normal text-slate-400">RPM</span></p>
-                <span className="text-[10px] font-mono-code text-emerald-400 block">COMPRESSOR EFFICIENCY: 94.2%</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">BOOST PRESSURE</span>
-                <p className="text-3xl font-bold font-telemetry text-emerald-300">{telemetry.turboBoostBar.toFixed(2)} <span className="text-sm font-normal text-slate-400">bar</span></p>
-                <span className="text-[10px] font-mono-code text-slate-400 block">MANIFOLD MAP: {telemetry.manifoldPressureInHg.toFixed(1)} inHg</span>
-              </div>
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                <span className="text-xs font-mono-code text-slate-400">THROTTLE POSITION</span>
-                <p className="text-3xl font-bold font-telemetry text-indigo-300">{telemetry.throttlePercent.toFixed(1)} <span className="text-sm font-normal text-slate-400">%</span></p>
-                <span className="text-[10px] font-mono-code text-emerald-400 block">WASTEGATE SERVO POSITION: 42.8%</span>
-              </div>
-            </div>
-
-            {/* Section 3: Explainable AI (XAI) Turbo Diagnostic Panel */}
-            <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3 font-mono-code text-xs">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <div className="flex items-center gap-2 text-blue-400 font-bold">
-                  <Brain className="w-4 h-4" />
-                  <span>EXPLAINABLE AI (XAI) TURBOCHARGER REPORT</span>
-                </div>
-                <span className="text-slate-400">Confidence: <strong className="text-emerald-400">98.5%</strong></span>
-              </div>
-
-              <div className="space-y-2 text-slate-300 leading-relaxed">
-                <p>
-                  <strong>WHAT:</strong> Turbocharger impeller speed is operating at <strong>{telemetry.turbochargerRpm.toLocaleString()} RPM</strong> supplying <strong>{telemetry.turboBoostBar.toFixed(2)} bar</strong> boost.
-                </p>
-                <p>
-                  <strong>AERODYNAMIC INTEGRITY:</strong> Wastegate pneumatic actuator position is responding nominally to throttle adjustments ({telemetry.throttlePercent.toFixed(1)}%).
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 };
