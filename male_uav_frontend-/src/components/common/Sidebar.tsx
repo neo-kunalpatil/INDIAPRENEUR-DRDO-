@@ -17,6 +17,7 @@ import {
   ShieldCheck, 
   ChevronLeft, 
   ChevronRight,
+  ChevronDown,
   Search,
   ExternalLink,
   Layers
@@ -32,6 +33,20 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const { activeTab, setActiveTab, selectedUav, nightVisionMode, alerts } = useGcs();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const moreModuleIds = [
+    'maintenance',
+    'fleet',
+    'alerts',
+    'multi-agent',
+    'continuous-learning',
+    'reports',
+    'system-health'
+  ];
+
+  const [isMoreExpanded, setIsMoreExpanded] = useState<boolean>(() => 
+    moreModuleIds.includes(activeTab)
+  );
 
   const iconMap: Record<string, React.ReactNode> = {
     LayoutDashboard: <LayoutDashboard className="w-4 h-4" />,
@@ -51,10 +66,65 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
     ShieldCheck: <ShieldCheck className="w-4 h-4" />,
   };
 
-  const filteredItems = NAV_ITEMS.filter(item => 
+  const topItems = NAV_ITEMS.filter(item => !moreModuleIds.includes(item.id));
+  const moreItems = NAV_ITEMS.filter(item => moreModuleIds.includes(item.id));
+
+  const filterItem = (item: typeof NAV_ITEMS[0]) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    item.id.toLowerCase().includes(searchQuery.toLowerCase());
+
+  const filteredTopItems = topItems.filter(filterItem);
+  const filteredMoreItems = moreItems.filter(filterItem);
+  const isSearching = searchQuery.trim().length > 0;
+
+  const renderNavItem = (item: typeof NAV_ITEMS[0], isChild = false) => {
+    const isActive = activeTab === item.id;
+    const isAlert = item.id === 'alerts' && alerts.some(a => !a.acknowledged);
+
+    return (
+      <button
+        key={item.id}
+        onClick={() => setActiveTab(item.id)}
+        className={`w-full flex items-center gap-3 px-2.5 py-2 rounded text-xs font-medium transition-all group relative ${
+          isChild ? 'pl-4' : ''
+        } ${
+          isActive
+            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+            : 'text-gray-400 hover:text-white hover:bg-[#15171A] border border-transparent'
+        }`}
+        title={isCollapsed ? item.label : undefined}
+      >
+        {/* Active Indicator Bar */}
+        {isActive && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-blue-400 rounded-r" />
+        )}
+
+        <div className={`transition-transform duration-200 ${isActive ? 'text-blue-400' : 'group-hover:text-blue-300'}`}>
+          {iconMap[item.icon] || <Activity className="w-4 h-4" />}
+        </div>
+
+        {!isCollapsed && (
+          <div className="flex-1 text-left flex items-center justify-between overflow-hidden">
+            <span className={`truncate ${isActive ? 'font-bold text-white' : ''}`}>
+              {item.label}
+            </span>
+            {item.badge && (
+              <span className={`text-[9px] font-mono-code px-1.5 py-0.2 rounded font-bold uppercase tracking-wider shrink-0 ${
+                item.badge === 'USP' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' :
+                item.badge === 'LIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' :
+                isAlert ? 'bg-red-500/10 text-red-400 border border-red-500/30 animate-pulse' :
+                'bg-[#15171A] text-gray-400 border border-[#2A2D33]'
+              }`}>
+                {item.badge}
+              </span>
+            )}
+          </div>
+        )}
+      </button>
+    );
+  };
+
+  const hasActiveMoreChild = moreModuleIds.includes(activeTab);
 
   return (
     <aside
@@ -97,50 +167,49 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
           {!isCollapsed && 'OPERATIONAL MODULES'}
         </div>
 
-        {filteredItems.map((item) => {
-          const isActive = activeTab === item.id;
-          const isAlert = item.id === 'alerts' && alerts.some(a => !a.acknowledged);
+        {/* Top 8 Menu Items up to Fault Simulator */}
+        {filteredTopItems.map(item => renderNavItem(item, false))}
 
-          return (
+        {/* Expandable "More Modules" Dropdown immediately below Fault Simulator */}
+        {(!isSearching && filteredMoreItems.length > 0) && (
+          <div className="space-y-1 pt-1 border-t border-[#2A2D33]/60">
             <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-2.5 py-2 rounded text-xs font-medium transition-all group relative ${
-                isActive
-                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-[#15171A] border border-transparent'
+              onClick={() => setIsMoreExpanded(prev => !prev)}
+              className={`w-full flex items-center gap-3 px-2.5 py-2 rounded text-xs font-medium transition-all group border ${
+                hasActiveMoreChild
+                  ? 'bg-blue-500/5 text-blue-300 border-blue-500/20 font-bold'
+                  : 'text-gray-400 hover:text-white hover:bg-[#15171A] border-transparent'
               }`}
-              title={isCollapsed ? item.label : undefined}
+              title={isCollapsed ? 'More Modules' : undefined}
             >
-              {/* Active Indicator Bar */}
-              {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-blue-400 rounded-r" />
-              )}
-
-              <div className={`transition-transform duration-200 ${isActive ? 'text-blue-400' : 'group-hover:text-blue-300'}`}>
-                {iconMap[item.icon] || <Activity className="w-4 h-4" />}
+              <div className="text-gray-400 group-hover:text-blue-400 transition-colors">
+                <Layers className="w-4 h-4" />
               </div>
 
               {!isCollapsed && (
-                <div className="flex-1 text-left flex items-center justify-between overflow-hidden">
-                  <span className={`truncate ${isActive ? 'font-bold text-white' : ''}`}>
-                    {item.label}
-                  </span>
-                  {item.badge && (
-                    <span className={`text-[9px] font-mono-code px-1.5 py-0.2 rounded font-bold uppercase tracking-wider shrink-0 ${
-                      item.badge === 'USP' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' :
-                      item.badge === 'LIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' :
-                      isAlert ? 'bg-red-500/10 text-red-400 border border-red-500/30 animate-pulse' :
-                      'bg-[#15171A] text-gray-400 border border-[#2A2D33]'
-                    }`}>
-                      {item.badge}
+                <div className="flex-1 text-left flex items-center justify-between">
+                  <span className="truncate font-semibold">More Modules</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-mono-code px-1.5 py-0.2 rounded font-bold bg-[#15171A] text-gray-400 border border-[#2A2D33]">
+                      7
                     </span>
-                  )}
+                    <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-250 ${isMoreExpanded ? 'rotate-180 text-blue-400' : ''}`} />
+                  </div>
                 </div>
               )}
             </button>
-          );
-        })}
+
+            {/* Collapsible Submenu */}
+            {(isMoreExpanded || isCollapsed) && (
+              <div className={`space-y-1 transition-all duration-250 ease-in-out ${isCollapsed ? '' : 'pl-2 border-l border-[#2A2D33]/80 ml-2'}`}>
+                {filteredMoreItems.map(item => renderNavItem(item, !isCollapsed))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* When searching, show matching items directly */}
+        {isSearching && filteredMoreItems.map(item => renderNavItem(item, false))}
       </div>
 
       {/* Selected UAV Telemetry Micro-Card */}
