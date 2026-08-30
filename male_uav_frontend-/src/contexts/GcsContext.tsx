@@ -187,7 +187,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 oilPressureBar: data.oil_pressure_kpa !== undefined ? Number((data.oil_pressure_kpa / 100).toFixed(2)) : (data.oilPressure !== undefined ? data.oilPressure : prev.oilPressureBar),
                 fuelPressureBar: data.fuel_pressure_kpa !== undefined ? Number((data.fuel_pressure_kpa / 100).toFixed(2)) : prev.fuelPressureBar,
                 fuelFlowLitersHr: data.fuel_flow_lph !== undefined ? Number(data.fuel_flow_lph.toFixed(1)) : (data.fuelFlow !== undefined ? data.fuelFlow : prev.fuelFlowLitersHr),
-                chtC: Array.isArray(data.cht_c) ? data.cht_c : (typeof data.cht_c === 'number' ? [data.cht_c, data.cht_c + 1.2, data.cht_c - 0.8, data.cht_c + 0.5] : prev.chtC),
+                chtC: Array.isArray(data.cht_c) ? data.cht_c.map((v: any) => typeof v === 'number' ? Number(v.toFixed(1)) : v) : (typeof data.cht_c === 'number' ? [Number(data.cht_c.toFixed(1)), Number((data.cht_c + 1.2).toFixed(1)), Number((data.cht_c - 0.8).toFixed(1)), Number((data.cht_c + 0.5).toFixed(1))] : prev.chtC),
                 egtC: Array.isArray(data.egt_c) ? data.egt_c : (typeof data.egt_c === 'number' ? [Math.round(data.egt_c), Math.round(data.egt_c + 5), Math.round(data.egt_c - 4), Math.round(data.egt_c + 3)] : prev.egtC),
                 turbochargerRpm: data.turbochargerRpm !== undefined ? data.turbochargerRpm : prev.turbochargerRpm,
                 turboBoostBar: data.turbo_boost !== undefined ? Number(data.turbo_boost.toFixed(2)) : prev.turboBoostBar,

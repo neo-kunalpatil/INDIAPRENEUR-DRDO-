@@ -74,7 +74,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
             <span className="font-mono-code font-bold text-2xl tracking-tight text-white">
-              {value}
+              {typeof value === 'number' ? (Number.isInteger(value) ? value : Number(value.toFixed(2))) : value}
             </span>
             {unit && (
               <span className="text-xs font-mono-code text-gray-400 uppercase">
