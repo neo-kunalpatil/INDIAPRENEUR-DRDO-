@@ -18,9 +18,17 @@ class TelemetryRepository:
                 data = dict(zip(col_names, row))
                 if "time" in data and data["time"]:
                     data["timestamp"] = str(data["time"])
+                
+                # Explicit rollback to keep connection pool clean in read-only mode
+                conn.rollback()
                 return data
         except Exception as e:
             print(f"[TelemetryRepo Error] {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return {}
         finally:
             release_telemetry_db(conn)
@@ -44,9 +52,15 @@ class TelemetryRepository:
                     if "time" in item and item["time"]:
                         item["timestamp"] = str(item["time"])
                     result.append(item)
+                conn.rollback()
                 return result
         except Exception as e:
             print(f"[TelemetryRepo Error] {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return []
         finally:
             release_telemetry_db(conn)
@@ -82,9 +96,15 @@ class TelemetryRepository:
                 data = dict(zip(col_names, row))
                 if "time" in data and data["time"]:
                     data["timestamp"] = str(data["time"])
+                conn.rollback()
                 return data
         except Exception as e:
             print(f"[TelemetryRepo Environment Error] {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return {}
         finally:
             release_telemetry_db(conn)
@@ -104,6 +124,7 @@ class HealthRepository:
                     return {"healthScore": 100.0, "rulHours": 1500.0, "status": "NOMINAL"}
                 col_names = [d[0] for d in desc]
                 data = dict(zip(col_names, row))
+                conn.rollback()
                 return {
                     "healthScore": data.get("score", 100.0),
                     "rulHours": data.get("rul", 1500.0),
@@ -111,6 +132,11 @@ class HealthRepository:
                 }
         except Exception as e:
             print(f"[HealthRepo Error] {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return {"healthScore": 100.0, "rulHours": 1500.0, "status": "NOMINAL"}
         finally:
             release_telemetry_db(conn)
@@ -135,9 +161,15 @@ class FaultRepository:
                     if "time" in item and item["time"]:
                         item["timestamp"] = str(item["time"])
                     result.append(item)
+                conn.rollback()
                 return result
         except Exception as e:
             print(f"[FaultRepo Error] {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return []
         finally:
             release_telemetry_db(conn)
@@ -162,9 +194,15 @@ class AIAnomalyRepository:
                     if "time" in item and item["time"]:
                         item["timestamp"] = str(item["time"])
                     result.append(item)
+                conn.rollback()
                 return result
         except Exception as e:
             print(f"[AIAnomalyRepo Error] {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return []
         finally:
             release_telemetry_db(conn)

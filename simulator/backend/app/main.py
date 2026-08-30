@@ -172,33 +172,42 @@ async def receive_mission(data: Dict[str, Any]):
     if "command" in data:
         cmd = data["command"]
         if cmd == "START":
+            physics.is_paused = False
             physics.state["throttle_pct"] = 80.0
             physics.mission["mission_phase"] = "CLIMB"
         elif cmd == "PAUSE":
-            physics.state["throttle_pct"] = 15.0
+            physics.is_paused = True
             physics.mission["mission_phase"] = "LOITER"
         elif cmd == "STOP":
+            physics.is_paused = False
             physics.state["throttle_pct"] = 0.0
             physics.mission["mission_phase"] = "GROUND"
         elif cmd == "RESUME":
+            physics.is_paused = False
             physics.state["throttle_pct"] = 65.0
             physics.mission["mission_phase"] = "CRUISE"
     if "phase" in data:
         physics.mission["mission_phase"] = data["phase"]
         if data["phase"] == "GROUND_IDLE":
-            physics.state["throttle_pct"] = 10.0
+            physics.is_paused = False
+            physics.state["throttle_pct"] = 0.0
         elif data["phase"] == "TAKEOFF":
+            physics.is_paused = False
             physics.state["throttle_pct"] = 100.0
         elif data["phase"] == "CLIMB":
+            physics.is_paused = False
             physics.state["throttle_pct"] = 85.0
         elif data["phase"] == "CRUISE":
+            physics.is_paused = False
             physics.state["throttle_pct"] = 65.0
         elif data["phase"] == "LOITER":
             physics.state["throttle_pct"] = 45.0
         elif data["phase"] == "DESCENT":
+            physics.is_paused = False
             physics.state["throttle_pct"] = 25.0
         elif data["phase"] == "LANDING":
-            physics.state["throttle_pct"] = 15.0
+            physics.is_paused = False
+            physics.state["throttle_pct"] = 10.0
 
     loop = asyncio.get_running_loop()
     loop.run_in_executor(None, mission_repo.insert_mission_event, data)

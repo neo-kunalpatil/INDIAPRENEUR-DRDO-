@@ -6,6 +6,9 @@ class EnginePhysics:
         # Accumulating physical engine wear (never decreases automatically)
         self.wear = 0.0
 
+        # Dynamic state controls
+        self.is_paused = False
+
         # State vector (supports both camelCase and snake_case for full UI/API compatibility)
         self.state = {
             "rpm": 1200.0,
@@ -133,6 +136,10 @@ class EnginePhysics:
     def tick(self):
         # 10Hz Thermodynamics & Flight Physics Loop
         dt = 0.1
+
+        # If mission is PAUSED, freeze all telemetry values completely
+        if self.is_paused:
+            return
 
         # -------------------------------------------------------------
         # 1. THROTTLE & CONTROL INFLUENCES
