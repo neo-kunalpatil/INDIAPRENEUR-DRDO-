@@ -203,23 +203,28 @@ export const LiveMonitoringPage: React.FC = () => {
                         <span>CYLINDER #{idx + 1}</span>
                         <span className={`w-2 h-2 rounded-full ${isHot ? 'bg-red-500 animate-ping' : 'bg-emerald-400'}`} />
                       </div>
-
                       <div className="py-2 space-y-2">
                         <div>
-                          <span className="text-[10px] text-slate-500 block">CYL HEAD TEMP</span>
-                          <span className={`font-telemetry font-bold text-xl ${typeof cht === 'number' && cht > 125 ? 'text-red-400' : 'text-slate-100'}`}>
+                          <span className="text-[10px] text-slate-300 font-bold block">CYL HEAD TEMP</span>
+                          <span 
+                            className={`font-telemetry font-extrabold text-xl ${typeof cht === 'number' && cht > 125 ? 'text-red-400' : 'text-[#F8FAFC]'}`}
+                            style={{ textShadow: '0 0 8px rgba(255, 255, 255, 0.2)' }}
+                          >
                             {cht}°C
                           </span>
                         </div>
                         <div>
-                          <span className="text-[10px] text-slate-500 block">EXHAUST GAS</span>
-                          <span className={`font-telemetry font-bold text-lg ${typeof egt === 'number' && egt > 820 ? 'text-red-400' : 'text-slate-200'}`}>
+                          <span className="text-[10px] text-slate-300 font-bold block">EXHAUST GAS</span>
+                          <span 
+                            className={`font-telemetry font-extrabold text-lg ${typeof egt === 'number' && egt > 820 ? 'text-red-400' : 'text-[#F8FAFC]'}`}
+                            style={{ textShadow: '0 0 8px rgba(255, 255, 255, 0.2)' }}
+                          >
                             {egt}°C
                           </span>
                         </div>
                       </div>
 
-                      <div className="pt-1 border-t border-slate-800/60 text-[9px] text-slate-500 flex justify-between">
+                      <div className="pt-1 border-t border-slate-800/60 text-[9px] text-slate-400 font-bold flex justify-between">
                         <span>MAX: 135°C</span>
                         <span>MAX: 850°C</span>
                       </div>
@@ -250,7 +255,7 @@ export const LiveMonitoringPage: React.FC = () => {
               <div className="space-y-2">
                 {fftBins.map((bin, i) => (
                   <div key={i} className="flex items-center gap-3 text-xs font-mono-code">
-                    <span className="w-14 text-slate-400 shrink-0 text-right">{bin.hz} Hz</span>
+                    <span className="w-14 text-[#E5E7EB] font-bold shrink-0 text-right">{bin.hz} Hz</span>
                     <div className="flex-1 bg-slate-950 h-4 rounded-md overflow-hidden p-0.5 border border-slate-800 flex">
                       <div
                         className={`h-full rounded transition-all duration-300 ${
@@ -259,8 +264,8 @@ export const LiveMonitoringPage: React.FC = () => {
                         style={{ width: `${Math.min(100, (bin.mag / 8) * 100)}%` }}
                       />
                     </div>
-                    <span className="w-16 font-bold text-slate-200 text-right">{bin.mag.toFixed(1)} mm/s</span>
-                    <span className="w-28 text-[10px] text-slate-500 truncate">{bin.label}</span>
+                    <span className="w-16 font-bold text-slate-100 text-right">{bin.mag.toFixed(1)} mm/s</span>
+                    <span className="w-28 text-[10px] text-slate-400 font-bold truncate">{bin.label}</span>
                   </div>
                 ))}
               </div>

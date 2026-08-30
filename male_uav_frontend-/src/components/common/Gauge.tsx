@@ -60,12 +60,12 @@ export const Gauge: React.FC<GaugeProps> = ({
       <div className="scan-line" />
       
       {/* Top Label & Status */}
-      <div className="w-full flex items-center justify-between text-[10px] font-mono-code font-bold text-gray-500 uppercase tracking-widest mb-1 z-10">
+      <div className="w-full flex items-center justify-between text-[11px] font-mono-code font-bold text-[#F1F5F9] uppercase tracking-widest mb-1 z-10">
         <span className="truncate">{label}</span>
-        <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-          isCritical ? 'bg-red-500/10 text-red-400 border border-red-500/30' :
-          isWarning ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' :
-          'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shadow-sm ${
+          isCritical ? 'bg-red-950/80 text-red-300 border-red-500/60' :
+          isWarning ? 'bg-amber-950/80 text-amber-300 border-amber-500/60' :
+          'bg-blue-950/80 text-blue-300 border-blue-500/60'
         }`}>
           {isCritical ? 'CRIT' : isWarning ? 'WARN' : 'NORM'}
         </span>
@@ -85,7 +85,7 @@ export const Gauge: React.FC<GaugeProps> = ({
             cy={center}
             r={radius}
             fill="none"
-            stroke="#1F242D"
+            stroke="#2A3241"
             strokeWidth={strokeWidth}
             strokeDasharray={`${arcLength} ${circumference}`}
             strokeLinecap="round"
@@ -106,26 +106,32 @@ export const Gauge: React.FC<GaugeProps> = ({
           />
         </svg>
 
-        {/* Center Digital Readout */}
+        {/* Center Digital Readout (Bright #F8FAFC + #60A5FA Unit) */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
-          <span className="font-mono-code font-bold text-xl md:text-2xl tracking-wider text-white">
+          <span 
+            className="font-mono-code font-extrabold text-2xl md:text-3xl tracking-wide text-[#F8FAFC]"
+            style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.25)' }}
+          >
             {value.toFixed(decimals)}
           </span>
-          <span className="text-[10px] font-mono-code text-blue-400 uppercase tracking-widest">
+          <span className="text-[12px] font-mono-code text-[#60A5FA] font-bold uppercase tracking-widest mt-0.5">
             {unit}
           </span>
         </div>
       </div>
 
       {/* Footer Details: Range & Expected Comparison */}
-      <div className="w-full flex items-center justify-between text-[10px] font-mono-code text-gray-500 mt-1 pt-1.5 border-t border-[#2A2D33] z-10">
+      <div className="w-full flex items-center justify-between text-[11px] font-mono-code text-[#B7C0D1] mt-1 pt-1.5 border-t border-[#2A2D33] z-10 font-bold">
         <span>MIN: {min}</span>
         {diffFromExpected !== null && (
-          <span className={`${diffFromExpected > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+          <span 
+            className="font-extrabold"
+            style={{ color: diffFromExpected > 0 ? '#00F5A0' : '#FF6B6B' }}
+          >
             Δ {diffFromExpected > 0 ? `+${diffFromExpected.toFixed(decimals)}` : diffFromExpected.toFixed(decimals)}
           </span>
         )}
-        {subtext && <span className="text-gray-400">{subtext}</span>}
+        {subtext && <span className="text-[#B7C0D1]">{subtext}</span>}
         <span>MAX: {max}</span>
       </div>
     </div>

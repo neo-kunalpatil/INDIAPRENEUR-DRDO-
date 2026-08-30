@@ -24,10 +24,10 @@
   }
 }
 
-/* Light Mode Aerospace Theme Overrides (Siemens / ANSYS Enterprise Standard) */
+/* Light Mode Color System Overrides (Strictly isolated under html.light-mode) */
 html.light-mode body {
-  background-color: #F5F7FA !important;
-  color: #0F172A !important;
+  background-color: #F6F8FC !important;
+  color: #111827 !important;
 }
 
 html.light-mode .grid-bg {
@@ -35,54 +35,78 @@ html.light-mode .grid-bg {
   background-size: 20px 20px;
 }
 
-html.light-mode .gcs-card,
-html.light-mode .panel-border,
-html.light-mode [class*="bg-slate-900"],
-html.light-mode [class*="bg-slate-950"],
-html.light-mode [class*="bg-\[\#15171A\]"],
-html.light-mode [class*="bg-\[\#111318\]"],
-html.light-mode [class*="bg-\[\#0A0B0D\]"] {
+/* CARDS & PANELS IN LIGHT MODE */
+html.light-mode main .gcs-card,
+html.light-mode main .panel-border,
+html.light-mode main [class*="bg-slate-900"],
+html.light-mode main [class*="bg-slate-950"],
+html.light-mode main [class*="bg-\[\#15171A\]"],
+html.light-mode main [class*="bg-\[\#111318\]"],
+html.light-mode main [class*="bg-\[\#0A0B0D\]"] {
   background-color: #FFFFFF !important;
-  border-color: #D7DEE7 !important;
-  color: #0F172A !important;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+  border-color: #CBD5E1 !important;
+  color: #111827 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
-html.light-mode [class*="text-slate-100"],
-html.light-mode [class*="text-slate-200"],
-html.light-mode [class*="text-slate-300"],
-html.light-mode [class*="text-gray-100"],
-html.light-mode [class*="text-gray-200"],
-html.light-mode [class*="text-gray-300"] {
-  color: #0F172A !important;
+/* HIGH CONTRAST TYPOGRAPHY IN LIGHT MODE */
+html.light-mode main [class*="text-slate-100"],
+html.light-mode main [class*="text-slate-200"],
+html.light-mode main [class*="text-gray-100"],
+html.light-mode main [class*="text-gray-200"],
+html.light-mode main [class*="text-\[\#F8FAFC\]"] {
+  color: #111827 !important;
 }
 
-html.light-mode [class*="text-slate-400"],
-html.light-mode [class*="text-slate-500"],
-html.light-mode [class*="text-gray-400"],
-html.light-mode [class*="text-gray-500"] {
-  color: #475569 !important;
+html.light-mode main [class*="text-slate-300"],
+html.light-mode main [class*="text-gray-300"],
+html.light-mode main [class*="text-\[\#F1F5F9\]"] {
+  color: #374151 !important;
 }
 
-html.light-mode [class*="border-slate-800"],
-html.light-mode [class*="border-\[\#2A2D33\]"] {
-  border-color: #E2E8F0 !important;
+html.light-mode main [class*="text-slate-400"],
+html.light-mode main [class*="text-slate-500"],
+html.light-mode main [class*="text-gray-400"],
+html.light-mode main [class*="text-gray-500"],
+html.light-mode main [class*="text-\[\#B7C0D1\]"] {
+  color: #4B5563 !important;
 }
 
-html.light-mode aside,
+html.light-mode main [class*="border-slate-800"],
+html.light-mode main [class*="border-\[\#2A2D33\]"] {
+  border-color: #D1D5DB !important;
+}
+
+/* GAUGES IN LIGHT MODE */
+html.light-mode main circle[stroke="#2A3241"] {
+  stroke: #E2E8F0 !important;
+}
+
+/* ENFORCE DARK SIDEBAR NAVIGATION & DARK HEADER TOP RIBBON IN BOTH THEMES */
+aside {
+  background-color: #12161F !important;
+  border-color: #1E2638 !important;
+  color: #F8FAFC !important;
+}
+
+aside [class*="text-gray-400"] {
+  color: #94A3B8 !important;
+}
+
+/* TOP HEADER & FOOTER LIGHT MODE */
 html.light-mode header,
 html.light-mode footer {
   background-color: #FFFFFF !important;
-  border-color: #E2E8F0 !important;
-  color: #0F172A !important;
+  border-color: #D1D5DB !important;
+  color: #111827 !important;
 }
 
 html.light-mode input,
 html.light-mode select,
 html.light-mode textarea {
-  background-color: #F8FAFC !important;
+  background-color: #FFFFFF !important;
   border-color: #CBD5E1 !important;
-  color: #0F172A !important;
+  color: #111827 !important;
 }
 
 html.light-mode table th {
