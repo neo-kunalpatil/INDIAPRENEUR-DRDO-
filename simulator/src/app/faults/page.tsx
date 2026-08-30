@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useFaultStore } from '@/stores/faultStore';
 import { faultRegistry } from '@/stores/faultRegistry';
+import { ENDPOINTS } from '@/lib/config';
 
 export default function FaultsPage() {
   const [fType, setFType] = useState(faultRegistry[0].id); 
@@ -30,7 +31,7 @@ export default function FaultsPage() {
           const newFault = {id: Math.random().toString(), type: fType, severity: fSev, intensity: 0.01, timeAlive: 0};
           faultStore.addFault(newFault);
           try {
-            await fetch('http://localhost:4000/api/faults', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: fType, active: true}) });
+            await fetch(ENDPOINTS.faults, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: fType, active: true}) });
           } catch(e) {}
         }} className="bg-red-900 text-white px-4">INJECT</button>
       </div>
@@ -38,7 +39,7 @@ export default function FaultsPage() {
         {faultStore.activeFaults.map((f:any) => <div key={f.id} className="p-4 bg-red-900/20 border border-red-900 text-red-500 flex justify-between"><span>{f.type} ({f.severity})</span><button onClick={async ()=>{
           faultStore.removeFault(f.id);
           try {
-            await fetch('http://localhost:4000/api/faults', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: f.type, active: false}) });
+            await fetch(ENDPOINTS.faults, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: f.type, active: false}) });
           } catch(e) {}
         }}>REMOVE</button></div>)}
       </div>

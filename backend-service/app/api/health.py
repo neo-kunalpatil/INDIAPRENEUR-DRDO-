@@ -1,17 +1,14 @@
 from fastapi import APIRouter
-from typing import Dict, Any
-from app.services.simulator_client import simulator_client
+from app.repositories import HealthRepository, AIAnomalyRepository
 
 router = APIRouter(prefix="/api", tags=["Health"])
+health_repo = HealthRepository()
+ai_repo = AIAnomalyRepository()
 
 @router.get("/health")
 async def get_health():
-    return await simulator_client.get_health()
+    return health_repo.get_latest_health()
 
-@router.post("/health")
-async def post_health(data: Dict[str, Any]):
-    return await simulator_client.post_health(data)
-
-@router.post("/fft")
-async def post_fft(data: Dict[str, Any]):
-    return await simulator_client.post_fft(data)
+@router.get("/anomalies")
+async def get_anomalies():
+    return ai_repo.get_latest_anomalies()

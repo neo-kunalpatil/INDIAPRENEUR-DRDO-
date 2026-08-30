@@ -1,35 +1,29 @@
 @echo off
-echo ==========================================
-echo   MALE UAV GCS - FULL SYSTEM STARTUP
-echo ==========================================
+echo ========================================================
+echo   DRDO MALE UAV DIGITAL TWIN - FULL SYSTEM STARTUP
+echo ========================================================
 echo.
 
-:: Kill any existing processes on port 4000
-echo [1/3] Clearing port 4000...
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":4000 " ^| findstr "LISTENING"') do (
-    taskkill /F /PID %%a >nul 2>&1
-)
+echo [1/4] Starting Simulator Backend (FastAPI on Port 4000)...
+start "1. SIMULATOR BACKEND (Port 4000)" cmd /k "cd /d %~dp0simulator\backend && .\.venv\Scripts\Activate && python -m uvicorn app.main:app --port 4000"
 
-:: Start backend in new window
-echo [2/3] Starting Backend (FastAPI on port 4000)...
-start "MALE UAV BACKEND" cmd /k "cd /d %~dp0simulator && uvicorn main:app --host 0.0.0.0 --port 4000 --reload"
+echo [2/4] Starting Main Backend Gateway (FastAPI on Port 8000)...
+start "2. MAIN BACKEND GATEWAY (Port 8000)" cmd /k "cd /d %~dp0backend-service && .\.venv\Scripts\Activate && python -m uvicorn app.main:app --reload --port 8000"
 
-:: Wait for backend to start
-echo     Waiting 3 seconds for backend to initialize...
-timeout /t 3 /nobreak >nul
+echo [3/4] Starting Simulator Frontend (Port 3000)...
+start "3. SIMULATOR FRONTEND (Port 3000)" cmd /k "cd /d %~dp0simulator && npm run dev"
 
-:: Start frontend in new window
-echo [3/3] Starting Frontend (Next.js on port 3000)...
-start "MALE UAV FRONTEND" cmd /k "cd /d %~dp0simulator && npm run dev"
+echo [4/4] Starting Main Digital Twin Dashboard (Port 5173)...
+start "4. MAIN DASHBOARD FRONTEND (Port 5173)" cmd /k "cd /d %~dp0male_uav_frontend- && npm run dev"
 
 echo.
-echo ==========================================
-echo   SYSTEM STARTED
-echo   Backend:  http://localhost:4000
-echo   Frontend: http://localhost:3000
-echo   API Docs: http://localhost:4000/docs
-echo ==========================================
+echo ========================================================
+echo   ALL 4 MICROSERVICES LAUNCHED SUCCESSFULLY
+echo   --------------------------------------------------------
+echo   1. Simulator Backend:    http://localhost:4000
+echo   2. Main Backend Gateway: http://localhost:8000
+echo   3. Simulator Frontend:   http://localhost:3000
+echo   4. Main Dashboard UI:    http://localhost:5173
+echo ========================================================
 echo.
-echo Press any key to open browser...
-pause >nul
-start http://localhost:3000
+pause
