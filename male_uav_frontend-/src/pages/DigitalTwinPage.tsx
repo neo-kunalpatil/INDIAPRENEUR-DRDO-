@@ -12,34 +12,16 @@ import {
   ZoomOut,
   Maximize2,
   Info,
-  Sliders,
-  Box,
-  Search,
-  Sparkles,
-  Maximize,
-  Ghost,
-  Compass,
-  RotateCcw,
-  SlidersHorizontal,
-  ChevronRight,
-  Home,
-  ArrowLeft,
-  Focus
+  Sliders
 } from 'lucide-react';
 import { useGcs } from '../contexts/GcsContext';
 import { EngineComponentId } from '../types';
-import { DigitalTwinCanvas } from '../components/digital-twin/DigitalTwinCanvas';
 
 export const DigitalTwinPage: React.FC = () => {
-  const { selectedUav, telemetry } = useGcs();
+  const { selectedUav, telemetry, activeFaults } = useGcs();
   const [activeLayer, setActiveLayer] = useState<'THERMAL' | 'STRESS' | 'PHYSICS_DIFF' | 'MECHANICAL'>('THERMAL');
-  const [selectedComponent, setSelectedComponent] = useState<EngineComponentId | null>(null);
-  const [isExplodeActive, setIsExplodeActive] = useState<boolean>(false);
-  const [isTransparent, setIsTransparent] = useState<boolean>(true);
-  const [activeTabMode, setActiveTabMode] = useState<'TRANSPARENT' | 'LIVE' | 'EXPLODED' | 'PHOTOREALISTIC'>('TRANSPARENT');
-  const [explorationLevel, setExplorationLevel] = useState<number>(0);
-  const [isExplicitZoomRequested, setIsExplicitZoomRequested] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedComponent, setSelectedComponent] = useState<EngineComponentId>('cylinder_3');
+  const [rotationAngle, setRotationAngle] = useState<number>(25);
 
   const componentDetails: Record<EngineComponentId, {
     name: string;
@@ -50,23 +32,21 @@ export const DigitalTwinPage: React.FC = () => {
     healthScore: number;
     physicsExpectedTemp: number;
     notes: string;
-    assemblyPath: string[];
   }> = {
     cylinder_1: {
-      name: 'Cylinder #1 Combustion Assembly',
+      name: 'Cylinder #1 Combustion Assembly (Front Right)',
       subsystem: 'Combustion Chamber & Piston Assembly',
-      temp: telemetry.chtC[0] || 112.5,
+      temp: telemetry.chtC[0],
       stressMpa: 142,
       vibration: 2.1,
       healthScore: 94.2,
       physicsExpectedTemp: 111.0,
       notes: 'Bore clearance and compression ratio 9.0:1 nominal. Dual spark firing verified.',
-      assemblyPath: ['Engine Core', 'Cylinder Bank', 'Cylinder #1', 'Piston Crown'],
     },
     cylinder_2: {
-      name: 'Cylinder #2 Combustion Assembly',
+      name: 'Cylinder #2 Combustion Assembly (Rear Right)',
       subsystem: 'Combustion Chamber & Piston Assembly',
-      temp: telemetry.chtC[1] || 114.2,
+      temp: telemetry.chtC[1],
       stressMpa: telemetry.knockIndex > 0.4 ? 238 : 148,
       vibration: telemetry.knockIndex > 0.4 ? 5.6 : 2.3,
       healthScore: telemetry.knockIndex > 0.4 ? 68.4 : 91.5,
@@ -74,65 +54,59 @@ export const DigitalTwinPage: React.FC = () => {
       notes: telemetry.knockIndex > 0.4 
         ? 'WARNING: Incipient pre-ignition knock detected by piezoelectric acoustic sensor.' 
         : 'Piston crown thermal barrier coating intact. Exhaust valve lash nominal.',
-      assemblyPath: ['Engine Core', 'Cylinder Bank', 'Cylinder #2', 'Piston Crown'],
     },
     cylinder_3: {
-      name: 'Cylinder #3 Combustion Assembly (Overheat)',
+      name: 'Cylinder #3 Combustion Assembly (Front Left)',
       subsystem: 'Combustion Chamber & Piston Assembly',
-      temp: telemetry.chtC[2] || 128.4,
+      temp: telemetry.chtC[2],
       stressMpa: 154,
       vibration: 2.5,
-      healthScore: 74.5,
+      healthScore: telemetry.egtC[2] > 800 ? 74.5 : 88.0,
       physicsExpectedTemp: 110.8,
       notes: 'EGT monitor indicates lean fuel distribution. Direct injector flow rate 98.4%.',
-      assemblyPath: ['Engine Core', 'Cylinder Bank', 'Cylinder #3', 'Combustion Chamber'],
     },
     cylinder_4: {
-      name: 'Cylinder #4 Combustion Assembly',
+      name: 'Cylinder #4 Combustion Assembly (Rear Left)',
       subsystem: 'Combustion Chamber & Piston Assembly',
-      temp: telemetry.chtC[3] || 113.4,
+      temp: telemetry.chtC[3],
       stressMpa: 145,
       vibration: 2.2,
       healthScore: 92.0,
       physicsExpectedTemp: 112.0,
       notes: 'Air cooling baffle alignment within ±2mm specification. Cylinder head torque verified.',
-      assemblyPath: ['Engine Core', 'Cylinder Bank', 'Cylinder #4', 'Piston Crown'],
     },
     turbocharger: {
-      name: 'Exhaust Gas Turbocharger',
+      name: 'Exhaust Gas Turbocharger & Automatic Wastegate',
       subsystem: 'Forced Induction & Altitude Normalizer',
       temp: 680,
       stressMpa: 310,
       vibration: 3.4,
       healthScore: 89.2,
       physicsExpectedTemp: 665,
-      notes: `Compressor impeller rotating at ${(telemetry.turbochargerRpm || 114500).toLocaleString()} RPM. Boost: ${telemetry.turboBoostBar || 0.88} bar. Wastegate servo duty cycle 42%.`,
-      assemblyPath: ['Engine Core', 'Forced Induction', 'Turbocharger', 'Compressor Wheel'],
+      notes: `Compressor impeller rotating at ${telemetry.turbochargerRpm.toLocaleString()} RPM. Boost: ${telemetry.turboBoostBar} bar. Wastegate servo duty cycle 42%.`,
     },
     crankcase: {
-      name: 'Horizontally-Opposed Crankcase',
+      name: 'Horizontally-Opposed Aluminum Alloy Crankcase',
       subsystem: 'Structural Core & Main Bearings',
-      temp: telemetry.oilTempC || 106.2,
+      temp: telemetry.oilTempC,
       stressMpa: 98,
-      vibration: telemetry.vibrationRmsMmS || 2.35,
+      vibration: telemetry.vibrationRmsMmS,
       healthScore: 96.8,
       physicsExpectedTemp: 104.5,
-      notes: 'Main journal hydrodynamic oil film pressure 4.3 bar. Zero micro-cracking acoustic emissions.',
-      assemblyPath: ['Engine Core', 'Crankcase', 'Main Crankshaft', 'Bearing Journal'],
+      notes: 'Main journal hydrodynamic oil film pressure 4.3 bar. Zero micro-cracking acoustic acoustic emissions.',
     },
     intercooler: {
-      name: 'Air-to-Air Intercooler',
+      name: 'Air-to-Air Charged Air Intercooler',
       subsystem: 'Intake Charge Cooling Circuit',
       temp: 48.5,
       stressMpa: 42,
       vibration: 0.8,
       healthScore: 98.1,
       physicsExpectedTemp: 47.0,
-      notes: 'Intake charge cooled by ΔT 62°C before entering plenum.',
-      assemblyPath: ['Engine Core', 'Intake Subsystem', 'Plenum', 'Intercooler Fins'],
+      notes: 'Intake charge cooled by ΔT 62°C before entering DellOrto/EFI plenum.',
     },
     fuel_injection_rail: {
-      name: 'Dual High-Pressure EFI Fuel Rail',
+      name: 'Dual High-Pressure Electronic Fuel Injection Rail',
       subsystem: 'Fuel Metering & Atomization',
       temp: 36.2,
       stressMpa: 65,
@@ -140,21 +114,19 @@ export const DigitalTwinPage: React.FC = () => {
       healthScore: 95.0,
       physicsExpectedTemp: 35.0,
       notes: 'Injection pressure stabilized at 2.85 bar. Pulse width modulation 4.2ms.',
-      assemblyPath: ['Engine Core', 'Fuel System', 'EFI Rail', 'Injectors'],
     },
     oil_cooling_circuit: {
-      name: 'Thermostatic Oil Cooler Circuit',
+      name: 'Thermostatic Dry-Sump Oil Tank & Radiator Circuit',
       subsystem: 'Lubrication & Thermal Dissipation',
-      temp: telemetry.oilTempC || 106.2,
+      temp: telemetry.oilTempC,
       stressMpa: 72,
       vibration: 1.5,
-      healthScore: 93.4,
+      healthScore: telemetry.oilPressureBar < 2.5 ? 65.0 : 93.4,
       physicsExpectedTemp: 105.0,
-      notes: `Scavenge pump flow rate 14.2 L/min. Oil pressure: ${telemetry.oilPressureBar || 4.35} bar.`,
-      assemblyPath: ['Engine Core', 'Lubrication', 'Oil Pump', 'Radiator Circuit'],
+      notes: `Scavenge pump flow rate 14.2 L/min. Oil pressure: ${telemetry.oilPressureBar} bar.`,
     },
     dual_cdi_ignition: {
-      name: 'Dual CDI Ignition Modules',
+      name: 'Dual Capacitive Discharge Ignition (CDI) Modules',
       subsystem: 'Electrical Ignition System',
       temp: 52.0,
       stressMpa: 30,
@@ -162,337 +134,359 @@ export const DigitalTwinPage: React.FC = () => {
       healthScore: 99.0,
       physicsExpectedTemp: 50.0,
       notes: 'Redundant dual channel A & B generating 35 kV firing sparks without misfire.',
-      assemblyPath: ['Engine Core', 'Electrical', 'CDI Box', 'Ignition Coils'],
     },
     gearbox_prop_governor: {
-      name: 'Integrated Helical Reduction Gearbox',
+      name: 'Integrated Helical Reduction Gearbox (Ratio 1:2.43)',
       subsystem: 'Torque Transfer & Propeller Governor',
       temp: 78.4,
       stressMpa: 185,
       vibration: 2.8,
       healthScore: 94.5,
       physicsExpectedTemp: 76.0,
-      notes: 'Overload slipper clutch engaged. Propeller governor maintaining prop RPM.',
-      assemblyPath: ['Engine Core', 'Transmission', 'Reduction Gearbox', 'Propeller Hub'],
+      notes: 'Overload slipper clutch engaged. Propeller governor maintaining 2,240 prop RPM.',
     },
   };
 
-  const currentComp = selectedComponent ? componentDetails[selectedComponent] : componentDetails['crankcase'];
+  const currentComp = componentDetails[selectedComponent];
 
-  // CLICKING A COMPONENT ONLY HIGHLIGHTS AND OPENS HIERARCHY (NO CAMERA ZOOM)
-  const handleComponentSelect = (id: EngineComponentId) => {
-    setSelectedComponent(id);
-    setExplorationLevel(1);
-    setIsExplicitZoomRequested(false); // Do NOT move camera on click
-  };
-
-  // EXPLICIT FOCUS / ZOOM IN BUTTON CLICK
-  const handleExplicitZoomRequest = () => {
-    setIsExplicitZoomRequested(true);
-    setExplorationLevel(prev => Math.min(4, prev + 1));
-  };
-
-  const handleLevelBack = () => {
-    setExplorationLevel(prev => Math.max(0, prev - 1));
-    if (explorationLevel <= 1) {
-      setSelectedComponent(null);
-      setIsExplicitZoomRequested(false);
-    }
-  };
-
-  const handleHomeReset = () => {
-    setExplorationLevel(0);
-    setSelectedComponent(null);
-    setIsExplicitZoomRequested(false);
-  };
-
-  const handleModeSwitch = (mode: 'TRANSPARENT' | 'LIVE' | 'EXPLODED' | 'PHOTOREALISTIC') => {
-    setActiveTabMode(mode);
-    if (mode === 'TRANSPARENT') {
-      setIsTransparent(true);
-      setIsExplodeActive(false);
-    } else if (mode === 'EXPLODED') {
-      setIsTransparent(false);
-      setIsExplodeActive(true);
-    } else {
-      setIsTransparent(false);
-      setIsExplodeActive(false);
-    }
+  const getHeatColor = (temp: number) => {
+    if (temp > 125 || (selectedComponent === 'turbocharger' && temp > 720)) return '#ef4444';
+    if (temp > 115 || (selectedComponent === 'turbocharger' && temp > 670)) return '#f59e0b';
+    return '#06b6d4';
   };
 
   return (
-    <div className="p-4 space-y-3 max-w-[1920px] mx-auto font-mono-code bg-[#0B0D12] min-h-screen text-gray-200">
-      {/* Top Banner Navigation Header */}
-      <div className="bg-[#111318]/95 border border-[#2A2D33] rounded p-3 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400">
-            <Rotate3d className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-                INNOVATION #1 // CAD DIGITAL TWIN WORKBENCH
-              </span>
-              <span className="text-gray-600">•</span>
-              <span className="text-[10px] text-blue-400 font-bold uppercase">INTERACTIVE CAD ENGINE INSPECTION</span>
-            </div>
-            <h1 className="font-bold text-lg md:text-xl text-white tracking-wide uppercase">
-              ROTAX 914-TC 3D DIGITAL TWIN ENGINE WORKBENCH
+    <div id="digital-twin-canvas" className="p-4 space-y-4 max-w-[1920px] mx-auto">
+      {/* Top Header Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="font-heading font-bold text-xl text-slate-100">
+              Interactive 3D Digital Twin & Multi-Layer Health Map
             </h1>
+            <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-mono-code font-bold">
+              SYNC FIDELITY: {selectedUav.twinConfidenceScore}%
+            </span>
           </div>
+          <p className="text-xs font-mono-code text-slate-400 mt-0.5">
+            Real-time finite element thermal & mechanical stress telemetry projection on Rotax 914-TC 3D geometry
+          </p>
         </div>
 
-        {/* 4 Mode Buttons */}
-        <div className="flex flex-wrap items-center gap-2 bg-[#15171A] p-1.5 rounded border border-[#2A2D33] text-xs">
-          <button
-            onClick={() => handleModeSwitch('LIVE')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded font-bold transition-all ${
-              activeTabMode === 'LIVE' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Rotate3d className="w-3.5 h-3.5" />
-            <div className="text-left">
-              <div className="text-[11px] leading-tight">LIVE TWIN</div>
-              <div className="text-[8px] opacity-75 font-normal">Real-Time Overview</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => handleModeSwitch('EXPLODED')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded font-bold transition-all ${
-              activeTabMode === 'EXPLODED' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Maximize className="w-3.5 h-3.5" />
-            <div className="text-left">
-              <div className="text-[11px] leading-tight">EXPLODED VIEW</div>
-              <div className="text-[8px] opacity-75 font-normal">Component Breakdown</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => handleModeSwitch('TRANSPARENT')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded font-bold transition-all ${
-              activeTabMode === 'TRANSPARENT' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-lg' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Ghost className="w-4 h-4 text-amber-400" />
-            <div className="text-left">
-              <div className="text-[11px] leading-tight">TRANSPARENT MODE</div>
-              <div className="text-[8px] opacity-75 font-normal text-amber-400/90">Internal Mechanics</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => handleModeSwitch('PHOTOREALISTIC')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded font-bold transition-all ${
-              activeTabMode === 'PHOTOREALISTIC' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <div className="text-left">
-              <div className="text-[11px] leading-tight">PHOTOREALISTIC</div>
-              <div className="text-[8px] opacity-75 font-normal">Real Engine View</div>
-            </div>
-          </button>
+        {/* Layer Selector Tabs */}
+        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-mono-code">
+          {(['THERMAL', 'STRESS', 'PHYSICS_DIFF', 'MECHANICAL'] as const).map((layer) => (
+            <button
+              key={layer}
+              onClick={() => setActiveLayer(layer)}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 ${
+                activeLayer === layer
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {layer === 'THERMAL' && <Flame className="w-3.5 h-3.5 text-orange-400" />}
+              {layer === 'STRESS' && <Activity className="w-3.5 h-3.5 text-amber-400" />}
+              {layer === 'PHYSICS_DIFF' && <Cpu className="w-3.5 h-3.5 text-cyan-400" />}
+              {layer === 'MECHANICAL' && <Layers className="w-3.5 h-3.5 text-purple-400" />}
+              <span>{layer.replace('_', ' ')}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Camera Breadcrumb Bar */}
-      <div className="bg-[#111318]/95 border border-[#2A2D33] rounded px-3 py-1.5 shadow-xl flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 text-gray-300">
-          <span className="text-[10px] text-gray-500 uppercase font-bold">CAD HIERARCHY TREE:</span>
-          <div className="flex items-center gap-1">
-            {currentComp.assemblyPath.slice(0, explorationLevel + 1).map((step, idx) => (
-              <React.Fragment key={idx}>
-                {idx > 0 && <ChevronRight className="w-3 h-3 text-gray-600" />}
-                <span className={`px-2 py-0.5 rounded font-bold text-[11px] ${
-                  idx === explorationLevel ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40' : 'text-gray-400'
-                }`}>
-                  {step}
+      {/* Main 3D Model Stage + Diagnostics Split View */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left 8 Cols: Interactive 3D Model Visualizer */}
+        <div className="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden min-h-[500px]">
+          {/* Tactical Grid & Ambient Glow */}
+          <div className="absolute inset-0 tactical-grid opacity-20 pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Model HUD Overlay Top Bar */}
+          <div className="flex items-center justify-between z-10 text-xs font-mono-code">
+            <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800">
+              <Rotate3d className="w-4 h-4 text-cyan-400" />
+              <span>ISOMETRIC PROJECTION (AZIMUTH {rotationAngle}°)</span>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800">
+              <span className="text-slate-400">LAYER:</span>
+              <span className="font-bold text-indigo-300">{activeLayer}</span>
+            </div>
+          </div>
+
+          {/* Isometric Engine SVG Schematic with Selectable Hotspots */}
+          <div className="relative flex-1 flex items-center justify-center my-6 z-10">
+            <svg
+              viewBox="0 0 800 480"
+              className="w-full max-w-2xl h-auto drop-shadow-2xl transition-transform duration-300"
+              style={{ transform: `rotateY(${rotationAngle}deg)` }}
+            >
+              {/* Crankcase Central Core */}
+              <rect
+                x="280"
+                y="180"
+                width="240"
+                height="150"
+                rx="18"
+                fill="#0f172a"
+                stroke={selectedComponent === 'crankcase' ? '#06b6d4' : '#334155'}
+                strokeWidth={selectedComponent === 'crankcase' ? 4 : 2}
+                className="cursor-pointer hover:fill-slate-800 transition-all"
+                onClick={() => setSelectedComponent('crankcase')}
+              />
+              <text x="400" y="260" textAnchor="middle" fill="#94a3b8" fontSize="13" fontFamily="monospace" fontWeight="bold">
+                CRANKCASE CORE (LUBRICATION)
+              </text>
+
+              {/* Cylinders Bank 1 (Right: Cyl 1 & 2) */}
+              {/* Cyl 1 */}
+              <g onClick={() => setSelectedComponent('cylinder_1')} className="cursor-pointer group">
+                <rect
+                  x="530"
+                  y="150"
+                  width="130"
+                  height="80"
+                  rx="10"
+                  fill={activeLayer === 'THERMAL' ? '#0c4a6e' : '#1e293b'}
+                  stroke={selectedComponent === 'cylinder_1' ? '#38bdf8' : '#0284c7'}
+                  strokeWidth={selectedComponent === 'cylinder_1' ? 3 : 1.5}
+                />
+                {/* Cooling Fins */}
+                <line x1="545" y1="165" x2="645" y2="165" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="545" y1="180" x2="645" y2="180" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="545" y1="195" x2="645" y2="195" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="545" y1="210" x2="645" y2="210" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <text x="595" y="195" textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                  CYL #1 ({telemetry.chtC[0]}°C)
+                </text>
+              </g>
+
+              {/* Cyl 2 */}
+              <g onClick={() => setSelectedComponent('cylinder_2')} className="cursor-pointer group">
+                <rect
+                  x="530"
+                  y="260"
+                  width="130"
+                  height="80"
+                  rx="10"
+                  fill={activeLayer === 'THERMAL' && telemetry.chtC[1] > 125 ? '#7f1d1d' : '#1e293b'}
+                  stroke={selectedComponent === 'cylinder_2' ? '#f43f5e' : telemetry.chtC[1] > 125 ? '#ef4444' : '#475569'}
+                  strokeWidth={selectedComponent === 'cylinder_2' ? 3 : 1.5}
+                />
+                <line x1="545" y1="275" x2="645" y2="275" stroke="#f43f5e" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="545" y1="290" x2="645" y2="290" stroke="#f43f5e" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="545" y1="305" x2="645" y2="305" stroke="#f43f5e" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="545" y1="320" x2="645" y2="320" stroke="#f43f5e" strokeWidth="1.5" strokeOpacity="0.6" />
+                <text x="595" y="305" textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                  CYL #2 ({telemetry.chtC[1]}°C)
+                </text>
+              </g>
+
+              {/* Cylinders Bank 2 (Left: Cyl 3 & 4) */}
+              {/* Cyl 3 */}
+              <g onClick={() => setSelectedComponent('cylinder_3')} className="cursor-pointer group">
+                <rect
+                  x="140"
+                  y="150"
+                  width="130"
+                  height="80"
+                  rx="10"
+                  fill={activeLayer === 'THERMAL' && telemetry.chtC[2] > 120 ? '#78350f' : '#0c4a6e'}
+                  stroke={selectedComponent === 'cylinder_3' ? '#fbbf24' : '#d97706'}
+                  strokeWidth={selectedComponent === 'cylinder_3' ? 3 : 1.5}
+                />
+                <line x1="155" y1="165" x2="255" y2="165" stroke="#fbbf24" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="155" y1="180" x2="255" y2="180" stroke="#fbbf24" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="155" y1="195" x2="255" y2="195" stroke="#fbbf24" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="155" y1="210" x2="255" y2="210" stroke="#fbbf24" strokeWidth="1.5" strokeOpacity="0.6" />
+                <text x="205" y="195" textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                  CYL #3 ({telemetry.chtC[2]}°C)
+                </text>
+              </g>
+
+              {/* Cyl 4 */}
+              <g onClick={() => setSelectedComponent('cylinder_4')} className="cursor-pointer group">
+                <rect
+                  x="140"
+                  y="260"
+                  width="130"
+                  height="80"
+                  rx="10"
+                  fill={activeLayer === 'THERMAL' ? '#0c4a6e' : '#1e293b'}
+                  stroke={selectedComponent === 'cylinder_4' ? '#38bdf8' : '#0284c7'}
+                  strokeWidth={selectedComponent === 'cylinder_4' ? 3 : 1.5}
+                />
+                <line x1="155" y1="275" x2="255" y2="275" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="155" y1="290" x2="255" y2="290" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="155" y1="305" x2="255" y2="305" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <line x1="155" y1="320" x2="255" y2="320" stroke="#38bdf8" strokeWidth="1.5" strokeOpacity="0.6" />
+                <text x="205" y="305" textAnchor="middle" fill="#f8fafc" fontSize="11" fontFamily="monospace" fontWeight="bold">
+                  CYL #4 ({telemetry.chtC[3]}°C)
+                </text>
+              </g>
+
+              {/* Turbocharger Assembly Top Center */}
+              <g onClick={() => setSelectedComponent('turbocharger')} className="cursor-pointer group">
+                <circle
+                  cx="400"
+                  cy="95"
+                  r="52"
+                  fill={activeLayer === 'THERMAL' ? '#831843' : '#1e1b4b'}
+                  stroke={selectedComponent === 'turbocharger' ? '#ec4899' : '#a855f7'}
+                  strokeWidth={selectedComponent === 'turbocharger' ? 3 : 2}
+                />
+                <circle cx="400" cy="95" r="28" fill="#0f172a" stroke="#ec4899" strokeWidth="1.5" />
+                <path d="M 380 95 Q 400 75 420 95 Q 400 115 380 95" fill="#ec4899" opacity="0.8" />
+                <text x="400" y="100" textAnchor="middle" fill="#fff" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                  TURBO ({telemetry.turboBoostBar} bar)
+                </text>
+              </g>
+
+              {/* Gearbox & Propeller Flange Bottom */}
+              <g onClick={() => setSelectedComponent('gearbox_prop_governor')} className="cursor-pointer group">
+                <polygon
+                  points="340,340 460,340 430,420 370,420"
+                  fill="#1e293b"
+                  stroke={selectedComponent === 'gearbox_prop_governor' ? '#10b981' : '#334155'}
+                  strokeWidth={selectedComponent === 'gearbox_prop_governor' ? 3 : 1.5}
+                />
+                <circle cx="400" cy="420" r="16" fill="#0284c7" stroke="#38bdf8" strokeWidth="2" />
+                <text x="400" y="380" textAnchor="middle" fill="#cbd5e1" fontSize="10" fontFamily="monospace" fontWeight="bold">
+                  REDUCTION GEARBOX (1:2.43)
+                </text>
+              </g>
+            </svg>
+          </div>
+
+          {/* Model Controls Footer */}
+          <div className="flex items-center justify-between z-10 pt-3 border-t border-slate-800 text-xs font-mono-code">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">CAMERA ROTATION:</span>
+              <button
+                onClick={() => setRotationAngle(prev => (prev - 15))}
+                className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200"
+              >
+                ⟲ -15°
+              </button>
+              <button
+                onClick={() => setRotationAngle(0)}
+                className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200"
+              >
+                FRONT 0°
+              </button>
+              <button
+                onClick={() => setRotationAngle(prev => (prev + 15))}
+                className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-slate-200"
+              >
+                ⟳ +15°
+              </button>
+            </div>
+
+            {/* Heat Gradient Legend */}
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 text-[10px]">TEMP SCALE:</span>
+              <div className="w-28 h-2.5 rounded-full bg-gradient-to-r from-cyan-500 via-amber-500 to-red-600 border border-slate-700" />
+              <span className="text-[10px] text-slate-400">80°C → 850°C</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right 4 Cols: Selected Component Diagnostics & Telemetry Sync */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Active Diagnostic Card */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+            <div className="flex items-start justify-between gap-2 border-b border-slate-800 pb-2.5 mb-3">
+              <div>
+                <span className="text-[10px] font-mono-code font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+                  {currentComp.subsystem}
                 </span>
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-
-        {/* Level Controls & Explicit Zoom/Focus Trigger */}
-        <div className="flex items-center gap-2">
-          {selectedComponent && (
-            <button
-              onClick={handleExplicitZoomRequest}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold border border-blue-400 shadow text-[11px]"
-            >
-              <Focus className="w-3.5 h-3.5" />
-              <span>Explicit Focus / Zoom In</span>
-            </button>
-          )}
-          {explorationLevel > 0 && (
-            <button
-              onClick={handleLevelBack}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-300 border border-[#2A2D33] text-[11px]"
-            >
-              <ArrowLeft className="w-3 h-3 text-blue-400" />
-              <span>Back (Level {explorationLevel - 1})</span>
-            </button>
-          )}
-          <button
-            onClick={handleHomeReset}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-300 border border-[#2A2D33] text-[11px]"
-          >
-            <Home className="w-3 h-3 text-amber-400" />
-            <span>Reset View (Level 0)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-        {/* Left Column: 3D CAD Viewport */}
-        <div className="lg:col-span-8 bg-[#111318]/95 border border-[#2A2D33] rounded p-3 shadow-2xl flex flex-col min-h-[600px] relative">
-          <div className="flex items-center justify-between mb-2 text-xs border-b border-[#2A2D33] pb-2">
-            <div className="flex items-center gap-2 text-gray-300 font-bold">
-              <Box className="w-4 h-4 text-amber-400" />
-              <span>CAD VIEWPORT (CAMERA FIXED FULL ENGINE | CLICK = HIGHLIGHT & HIERARCHY ONLY)</span>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-gray-400">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> STREAM: LIVE</span>
-              <span>|</span>
-              <span>REFRESHED: 20 ms ago</span>
-            </div>
-          </div>
-
-          {/* 3D Canvas Viewport */}
-          <div className="flex-1 relative rounded overflow-hidden">
-            <DigitalTwinCanvas
-              selectedComponent={selectedComponent}
-              onSelectComponent={handleComponentSelect}
-              activeLayer={activeLayer}
-              isExplodeActive={isExplodeActive}
-              isTransparent={isTransparent}
-              explorationLevel={explorationLevel}
-              isExplicitZoomRequested={isExplicitZoomRequested}
-              telemetry={telemetry}
-            />
-          </div>
-
-          {/* Bottom Toolbar Controls */}
-          <div className="mt-2 pt-2 border-t border-[#2A2D33] flex items-center justify-center gap-4 text-xs">
-            <button className="flex items-center gap-1 px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 border border-blue-500/40">
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Rotate</span>
-            </button>
-            <button className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-400">
-              <Compass className="w-3.5 h-3.5" />
-              <span>Pan</span>
-            </button>
-            <button onClick={handleExplicitZoomRequest} className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-400">
-              <ZoomIn className="w-3.5 h-3.5" />
-              <span>Zoom In</span>
-            </button>
-            <button onClick={handleHomeReset} className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-400">
-              <Maximize2 className="w-3.5 h-3.5" />
-              <span>Fit View</span>
-            </button>
-            <button className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-400">
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Section Cut</span>
-            </button>
-            <button onClick={handleHomeReset} className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-400">
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset View</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column: Component Telemetry Inspector Panel */}
-        <div className="lg:col-span-4 space-y-3">
-          <div className="bg-[#111318]/95 border border-[#2A2D33] rounded p-4 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2D33] pb-2">
-              <h2 className="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-2">
-                <Info className="w-4 h-4 text-blue-400" />
-                COMPONENT TELEMETRY INSPECTOR
-              </h2>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold">
-                LIVE SYNC
+                <h3 className="font-heading font-bold text-base text-slate-100 mt-1">
+                  {currentComp.name}
+                </h3>
+              </div>
+              <span className={`font-telemetry font-bold text-lg ${
+                currentComp.healthScore > 85 ? 'text-emerald-400' : 'text-amber-400'
+              }`}>
+                {currentComp.healthScore.toFixed(1)}%
               </span>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <span className="text-[10px] text-gray-500 uppercase block">
-                  {selectedComponent ? `Selected Component (Level ${explorationLevel})` : 'Entire Aero Engine Core'}
+            {/* Telemetry Metrics for Component */}
+            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono-code mb-3">
+              <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-slate-500 text-[10px] block">MEASURED TEMP</span>
+                <span className="font-telemetry font-bold text-xl text-slate-100">
+                  {currentComp.temp}°C
                 </span>
-                <h3 className="font-bold text-white text-base">{selectedComponent ? currentComp.name : 'Rotax 914-TC Aero Engine'}</h3>
-                <span className="text-[11px] text-blue-400 block">{selectedComponent ? currentComp.subsystem : 'Flat-4 Turbocharged Engine Core'}</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  Expected: {currentComp.physicsExpectedTemp}°C
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div className="bg-[#15171A] p-3 rounded border border-[#2A2D33]">
-                  <span className="text-[10px] text-gray-400 block uppercase">TEMPERATURE</span>
-                  <strong className="text-lg font-bold text-amber-400">
-                    {typeof currentComp.temp === 'number' ? currentComp.temp.toFixed(1) : currentComp.temp} °C
-                  </strong>
-                </div>
-
-                <div className="bg-[#15171A] p-3 rounded border border-[#2A2D33]">
-                  <span className="text-[10px] text-gray-400 block uppercase">PRESSURE</span>
-                  <strong className="text-lg font-bold text-blue-400">
-                    {telemetry.oilPressureBar || 4.35} bar
-                  </strong>
-                </div>
+              <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-slate-500 text-[10px] block">STRESS TENSOR</span>
+                <span className="font-telemetry font-bold text-xl text-indigo-300">
+                  {currentComp.stressMpa} MPa
+                </span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  Yield Limit: 420 MPa
+                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-[#15171A] p-3 rounded border border-[#2A2D33]">
-                  <span className="text-[10px] text-gray-400 block uppercase">VIBRATION</span>
-                  <strong className="text-base font-bold text-emerald-400">
-                    {telemetry.vibrationRmsMmS || 2.35} mm/s
-                  </strong>
-                </div>
-
-                <div className="bg-[#15171A] p-3 rounded border border-[#2A2D33]">
-                  <span className="text-[10px] text-gray-400 block uppercase">HEALTH</span>
-                  <strong className="text-base font-bold text-emerald-400">
-                    {currentComp.healthScore}%
-                  </strong>
-                </div>
+              <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-slate-500 text-[10px] block">VIBRATION RMS</span>
+                <span className="font-telemetry font-bold text-xl text-slate-100">
+                  {currentComp.vibration} mm/s
+                </span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  ISO Class I
+                </span>
               </div>
 
-              {/* Engine Overview Live Bars */}
-              <div className="pt-2 border-t border-[#2A2D33] space-y-2">
-                <span className="text-[10px] text-gray-400 uppercase font-bold block">ENGINE OVERVIEW</span>
-
-                <div className="space-y-1.5 text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">RPM</span>
-                    <span className="font-bold text-white">{(telemetry.rpm || 5120).toLocaleString()} RPM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">OIL PRESSURE</span>
-                    <span className="font-bold text-emerald-400">{telemetry.oilPressureBar || 4.35} bar</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">OIL TEMPERATURE</span>
-                    <span className="font-bold text-amber-400">{telemetry.oilTempC || 106.2} °C</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">EGT (All Cylinders)</span>
-                    <span className="font-bold text-red-400">{telemetry.egt || 765} °C</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">FUEL FLOW</span>
-                    <span className="font-bold text-emerald-400">{telemetry.fuelFlowLitersHr || 24.6} L/h</span>
-                  </div>
-                </div>
+              <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-slate-500 text-[10px] block">PHYSICS RESIDUAL</span>
+                <span className="font-telemetry font-bold text-xl text-emerald-400">
+                  {(Math.abs(currentComp.temp - currentComp.physicsExpectedTemp)).toFixed(1)}°C
+                </span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  ΔE &lt; 2.5% (Nominal)
+                </span>
               </div>
+            </div>
 
-              <div className="p-3 rounded bg-blue-950/20 border border-blue-500/30 text-[11px] text-gray-300">
-                <strong className="text-blue-400 block mb-0.5">Engineering Notes</strong>
-                <p>• {currentComp.notes}</p>
-                <p>• Camera fixed on full engine. Click = Highlight & Hierarchy Tree Only.</p>
-                <p>• Explicit Focus / Zoom In available on request.</p>
+            {/* Diagnostic Commentary */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+              <div className="flex items-center gap-1.5 text-cyan-400 font-mono-code font-bold text-[11px] mb-1">
+                <Info className="w-3.5 h-3.5" />
+                <span>PHYSICS-AI DIAGNOSTIC SUMMARY:</span>
               </div>
+              <p className="text-slate-300 text-xs leading-relaxed">
+                {currentComp.notes}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Component Selector Grid */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 text-xs font-mono-code">
+            <h4 className="font-heading font-bold text-xs text-slate-400 uppercase mb-2">
+              Select Component For Inspection
+            </h4>
+            <div className="grid grid-cols-2 gap-1.5">
+              {Object.entries(componentDetails).map(([key, val]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedComponent(key as EngineComponentId)}
+                  className={`p-2 rounded-lg border text-left truncate transition-colors ${
+                    selectedComponent === key
+                      ? 'bg-cyan-950 border-cyan-600 text-cyan-200 font-bold'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  {val.name.split(' ')[0]} {val.name.split(' ')[1]}
+                </button>
+              ))}
             </div>
           </div>
         </div>

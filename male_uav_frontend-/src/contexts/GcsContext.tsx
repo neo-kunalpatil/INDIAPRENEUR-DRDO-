@@ -15,9 +15,6 @@ import {
   DEMO_TOUR_STEPS 
 } from '../constants';
 
-const BACKEND_API_BASE = 'http://localhost:8000';
-const BACKEND_WS_URL = 'ws://localhost:8000/stream';
-
 interface TacticalChatMessage {
   id: string;
   sender: 'OPERATOR' | 'AI_COPILOT' | 'SYSTEM';
@@ -79,7 +76,6 @@ interface GcsContextType {
   resetTelemetryToNormal: () => void;
   customRulOffsetHours: number;
   setCustomRulOffsetHours: (hrs: number) => void;
-  isConnectedToBackend: boolean;
 }
 
 const GcsContext = createContext<GcsContextType | undefined>(undefined);
@@ -97,51 +93,30 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [currentTourStep, setCurrentTourStep] = useState<number>(0);
   const [customRulOffsetHours, setCustomRulOffsetHours] = useState<number>(0);
-  const [isConnectedToBackend, setIsConnectedToBackend] = useState<boolean>(false);
 
   const selectedUav = uavFleet.find(u => u.id === selectedUavId) || uavFleet[0];
 
-  // Base telemetry state connected live to Main Backend Gateway (Port 8000)
+  // Base telemetry state for Rotax 914 Turbocharged Aero Piston Engine
   const [telemetry, setTelemetry] = useState<EngineTelemetry>({
     timestamp: new Date().toISOString(),
-    rpm: 0,
-    manifoldPressureInHg: 0,
-    map: 0,
-    throttlePercent: 0,
-    throttle: 0,
-    coolantTempC: 0,
-    oilTempC: 0,
-    oilTemp: 0,
-    oilPressureBar: 0,
-    oilPressure: 0,
-    fuelPressureBar: 0,
-    fuelPressure: 0,
-    fuelFlowLitersHr: 0,
-    fuelFlow: 0,
-    chtC: [0, 0, 0, 0],
-    cht: 0,
-    egtC: [0, 0, 0, 0],
-    egt: 0,
-    turbochargerRpm: 0,
-    turboBoostBar: 0,
-    vibrationRmsMmS: 0,
-    vibrationFftPeakHz: 0,
-    vibrationX: 0,
-    vibrationY: 0,
-    vibrationZ: 0,
-    knockIndex: 0,
-    lambdaAirFuelRatio: 0,
-    batteryVoltage: 0,
-    alternatorVoltage: 0,
-    altitude: 0,
-    airspeed: 0,
-    verticalSpeed: 0,
-    oat: 0,
-    humidity: 0,
-    windSpeed: 0,
-    fuelRemaining: 0,
-    ambientTempC: 0,
-    ambientPressureHpa: 0,
+    rpm: 5120,
+    manifoldPressureInHg: 35.8,
+    throttlePercent: 86.5,
+    coolantTempC: 98.4,
+    oilTempC: 106.2,
+    oilPressureBar: 4.35,
+    fuelPressureBar: 2.85,
+    fuelFlowLitersHr: 24.6,
+    chtC: [112.5, 114.2, 111.8, 113.4],
+    egtC: [765, 772, 760, 768],
+    turbochargerRpm: 114500,
+    turboBoostBar: 0.88,
+    vibrationRmsMmS: 2.35,
+    vibrationFftPeakHz: 85.3,
+    knockIndex: 0.08,
+    lambdaAirFuelRatio: 0.98,
+    ambientTempC: -14.2,
+    ambientPressureHpa: 432,
   });
 
   const [chatMessages, setChatMessages] = useState<TacticalChatMessage[]>([
@@ -149,13 +124,13 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: 'msg-1',
       sender: 'SYSTEM',
       timestamp: '11:40:00 UTC',
-      text: 'DRDO GCS Digital Twin Gateway Initialized. Connected to Main Backend Gateway (Port 8000).',
+      text: 'DRDO GCS Digital Twin Telemetry Node Initialized. Connected to UAV-TAPAS-201 at Chitradurga ATR.',
     },
     {
       id: 'msg-2',
       sender: 'AI_COPILOT',
       timestamp: '11:40:05 UTC',
-      text: 'Operational Status Normal. Subscribing to live Python FastAPI telemetry stream.',
+      text: 'Operational Status Normal. Physics+AI Hybrid Twin running in dual verification mode. Engine health index is 88.4%.',
     },
   ]);
 
@@ -182,109 +157,64 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [uavFleet, speakVoiceAlert]);
 
-  // Persistent Live WebSocket Stream Integration with Main Backend Gateway (Port 8000)
+  // Live telemetry pulse simulation with realistic noise & fault injection responsiveness
   useEffect(() => {
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: any = null;
+    if (!isSimulationRunning) return;
 
-    const connectWebSocket = () => {
-      try {
-        ws = new WebSocket(BACKEND_WS_URL);
+    const interval = setInterval(() => {
+      setTelemetry((prev) => {
+        const noise = (Math.random() - 0.5);
+        const hasTurboFault = activeFaults.some(f => f.type === 'TURBO_WASTEGATE_STUCK' && f.active);
+        const hasInjectorFault = activeFaults.some(f => f.type === 'INJECTOR_3_CLOGGED' && f.active);
+        const hasOilFault = activeFaults.some(f => f.type === 'OIL_PUMP_CAVITATION' && f.active);
+        const hasKnockFault = activeFaults.some(f => f.type === 'CYLINDER_2_PREIGNITION' && f.active);
 
-        ws.onopen = () => {
-          setIsConnectedToBackend(true);
-          console.log('[Main Dashboard] Connected to Main Backend Gateway Stream (ws://localhost:8000/stream)');
+        // Adjust telemetry based on faults
+        const targetRpm = hasTurboFault ? 4850 + noise * 60 : 5120 + noise * 25;
+        const targetMap = hasTurboFault ? 29.4 + noise * 0.8 : 35.8 + noise * 0.2;
+        const targetBoost = hasTurboFault ? 0.48 + noise * 0.05 : 0.88 + noise * 0.02;
+
+        const cyl1Cht = 112.5 + noise * 0.8;
+        const cyl2Cht = (hasKnockFault ? 134.8 : 114.2) + noise * 0.8;
+        const cyl3Cht = (hasInjectorFault ? 128.4 : 111.8) + noise * 0.9;
+        const cyl4Cht = 113.4 + noise * 0.8;
+
+        const cyl1Egt = 765 + noise * 3;
+        const cyl2Egt = 772 + noise * 3;
+        const cyl3Egt = (hasInjectorFault ? 848 : 760) + noise * 4;
+        const cyl4Egt = 768 + noise * 3;
+
+        const oilPres = hasOilFault ? 2.15 + Math.sin(Date.now() / 1000) * 0.4 : 4.35 + noise * 0.05;
+        const oilTemp = hasOilFault ? 119.5 + noise * 0.4 : 106.2 + noise * 0.2;
+        const vibRms = (hasKnockFault || hasInjectorFault || hasOilFault) ? 5.8 + noise * 0.4 : 2.35 + noise * 0.15;
+        const knock = hasKnockFault ? 0.74 + noise * 0.08 : 0.08 + Math.abs(noise * 0.02);
+
+        return {
+          timestamp: new Date().toISOString(),
+          rpm: Math.round(targetRpm),
+          manifoldPressureInHg: Number(targetMap.toFixed(1)),
+          throttlePercent: prev.throttlePercent,
+          coolantTempC: Number((98.4 + noise * 0.4).toFixed(1)),
+          oilTempC: Number(oilTemp.toFixed(1)),
+          oilPressureBar: Number(oilPres.toFixed(2)),
+          fuelPressureBar: Number((2.85 + noise * 0.03).toFixed(2)),
+          fuelFlowLitersHr: Number((24.6 + noise * 0.3).toFixed(1)),
+          chtC: [Number(cyl1Cht.toFixed(1)), Number(cyl2Cht.toFixed(1)), Number(cyl3Cht.toFixed(1)), Number(cyl4Cht.toFixed(1))],
+          egtC: [Math.round(cyl1Egt), Math.round(cyl2Egt), Math.round(cyl3Egt), Math.round(cyl4Egt)],
+          turbochargerRpm: Math.round(hasTurboFault ? 88000 + noise * 1200 : 114500 + noise * 600),
+          turboBoostBar: Number(targetBoost.toFixed(2)),
+          vibrationRmsMmS: Number(vibRms.toFixed(2)),
+          vibrationFftPeakHz: Number((85.3 + (hasInjectorFault ? 42.1 : 0) + noise * 1.5).toFixed(1)),
+          knockIndex: Number(Math.min(1.0, Math.max(0, knock)).toFixed(2)),
+          lambdaAirFuelRatio: Number((hasInjectorFault ? 1.14 : 0.98 + noise * 0.01).toFixed(2)),
+          ambientTempC: prev.ambientTempC,
+          ambientPressureHpa: prev.ambientPressureHpa,
         };
+      });
+    }, 1500);
 
-        ws.onmessage = (event) => {
-          try {
-            const rawData = JSON.parse(event.data);
-            const data = rawData.payload || rawData.data || rawData;
-
-            if (data) {
-              setTelemetry((prev) => ({
-                ...prev,
-                timestamp: data.timestamp ? new Date(data.timestamp).toISOString() : new Date().toISOString(),
-                rpm: data.rpm !== undefined ? data.rpm : prev.rpm,
-                throttlePercent: data.throttle !== undefined ? data.throttle : (data.load_pct !== undefined ? data.load_pct : prev.throttlePercent),
-                throttle: data.throttle !== undefined ? data.throttle : prev.throttle,
-                manifoldPressureInHg: data.map_kpa !== undefined ? Number((data.map_kpa * 0.2953).toFixed(1)) : (data.map !== undefined ? data.map : prev.manifoldPressureInHg),
-                map: data.map_kpa !== undefined ? data.map_kpa : (data.map !== undefined ? data.map : prev.map),
-                oilTempC: data.oil_temp_c !== undefined ? data.oil_temp_c : (data.oilTemp !== undefined ? data.oilTemp : prev.oilTempC),
-                oilTemp: data.oil_temp_c !== undefined ? data.oil_temp_c : (data.oilTemp !== undefined ? data.oilTemp : prev.oilTemp),
-                oilPressureBar: data.oil_pressure_kpa !== undefined ? Number((data.oil_pressure_kpa / 100).toFixed(2)) : (data.oilPressure !== undefined ? data.oilPressure : prev.oilPressureBar),
-                oilPressure: data.oil_pressure_kpa !== undefined ? data.oil_pressure_kpa : (data.oilPressure !== undefined ? data.oilPressure : prev.oilPressure),
-                fuelFlowLitersHr: data.fuel_flow_lph !== undefined ? data.fuel_flow_lph : (data.fuelFlow !== undefined ? data.fuelFlow : prev.fuelFlowLitersHr),
-                fuelFlow: data.fuel_flow_lph !== undefined ? data.fuel_flow_lph : (data.fuelFlow !== undefined ? data.fuelFlow : prev.fuelFlow),
-                chtC: Array.isArray(data.cht_c) ? data.cht_c : [data.cht_c || 112.5, 114.2, 111.8, 113.4],
-                cht: typeof data.cht_c === 'number' ? data.cht_c : prev.cht,
-                egtC: Array.isArray(data.egt_c) ? data.egt_c : [data.egt_c || 765, 772, 760, 768],
-                egt: typeof data.egt_c === 'number' ? data.egt_c : prev.egt,
-                batteryVoltage: data.battery_v !== undefined ? data.battery_v : (data.batteryVoltage !== undefined ? data.batteryVoltage : prev.batteryVoltage),
-                alternatorVoltage: data.battery_v !== undefined ? Number((data.battery_v + 0.3).toFixed(1)) : prev.alternatorVoltage,
-                vibrationX: data.vib_x_g !== undefined ? data.vib_x_g : prev.vibrationX,
-                vibrationY: data.vib_y_g !== undefined ? data.vib_y_g : prev.vibrationY,
-                vibrationZ: data.vib_z_g !== undefined ? data.vib_z_g : prev.vibrationZ,
-                vibrationRmsMmS: data.vib_z_g !== undefined ? Number((data.vib_z_g * 10).toFixed(2)) : prev.vibrationRmsMmS,
-                altitude: data.altitude !== undefined ? data.altitude : prev.altitude,
-                airspeed: data.airspeed !== undefined ? data.airspeed : prev.airspeed,
-                verticalSpeed: data.verticalSpeed !== undefined ? data.verticalSpeed : prev.verticalSpeed,
-                fuelRemaining: data.fuelRemaining !== undefined ? data.fuelRemaining : (prev.fuelRemaining > 0 ? prev.fuelRemaining : 180.0),
-              }));
-
-              if (data.health_score !== undefined || data.health !== undefined) {
-                const healthVal = data.health_score !== undefined ? data.health_score : data.health;
-                setUavFleet(prev => prev.map(u => u.id === selectedUavId ? { ...u, engineHealthIndex: healthVal } : u));
-              }
-            }
-          } catch (e) {
-            console.error('Error parsing backend telemetry stream packet:', e);
-          }
-        };
-
-        ws.onclose = () => {
-          setIsConnectedToBackend(false);
-          console.warn('[Main Dashboard] Lost connection to Main Backend Gateway. Retrying in 2s...');
-          reconnectTimeout = setTimeout(connectWebSocket, 2000);
-        };
-
-        ws.onerror = (err) => {
-          setIsConnectedToBackend(false);
-          console.error('[Main Dashboard] WebSocket error:', err);
-          ws?.close();
-        };
-      } catch (err) {
-        setIsConnectedToBackend(false);
-        reconnectTimeout = setTimeout(connectWebSocket, 2000);
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (ws) ws.close();
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
-    };
-  }, [selectedUavId]);
-
-  // Initial REST fetch from Main Backend Gateway (Port 8000)
-  useEffect(() => {
-    fetch(`${BACKEND_API_BASE}/api/telemetry/latest`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.rpm !== undefined) {
-          setTelemetry(prev => ({
-            ...prev,
-            rpm: data.rpm,
-            oilTempC: data.oil_temp_c || prev.oilTempC,
-            oilPressureBar: data.oil_pressure_kpa ? data.oil_pressure_kpa / 100 : prev.oilPressureBar,
-            fuelFlowLitersHr: data.fuel_flow_lph || prev.fuelFlowLitersHr,
-            batteryVoltage: data.battery_v || prev.batteryVoltage,
-          }));
-        }
-      })
-      .catch(err => console.warn('Failed initial REST fetch from Main Backend:', err));
-  }, []);
+    return () => clearInterval(interval);
+  }, [isSimulationRunning, activeFaults]);
 
   const injectFault = useCallback((faultId: string, severity?: number) => {
     let injectedFaultData: InjectedFault | undefined;
@@ -308,13 +238,6 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (injectedFaultData) {
       const fault = injectedFaultData as InjectedFault;
-      // Post fault injection to Main Backend Gateway
-      fetch(`${BACKEND_API_BASE}/api/faults`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: fault.name, active: true, severity: fault.severityPercent })
-      }).catch(err => console.error('Failed to post fault to Main Backend:', err));
-
       const uniqueAlertId = `ALT-INJ-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const newAlert: AlertNotification = {
         id: uniqueAlertId,
@@ -333,6 +256,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       speakVoiceAlert(`Warning: Anomaly injected. ${fault.name}`);
     }
 
+    // Update UAV health index in state
     setUavFleet((prev) =>
       prev.map((u) => {
         if (u.id === selectedUav.id) {
@@ -562,7 +486,6 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         resetTelemetryToNormal,
         customRulOffsetHours,
         setCustomRulOffsetHours,
-        isConnectedToBackend,
       }}
     >
       {children}
