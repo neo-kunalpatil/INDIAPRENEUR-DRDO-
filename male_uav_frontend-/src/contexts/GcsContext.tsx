@@ -203,6 +203,24 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 const healthVal = data.health_score !== undefined ? data.health_score : data.health;
                 setUavFleet(prev => prev.map(u => u.id === selectedUavId ? { ...u, engineHealthIndex: Number(healthVal.toFixed(1)) } : u));
               }
+
+              // Dynamic 1:1 Fault Synchronization from Backend Stream Payload
+              if (Array.isArray(data.active_faults)) {
+                setActiveFaults((prev) =>
+                  prev.map((f) => {
+                    const match = data.active_faults.find((af: any) => 
+                      (af.id && af.id.toLowerCase() === f.id.toLowerCase()) || 
+                      (af.name && af.name.toLowerCase() === f.name.toLowerCase()) ||
+                      (af.fault_type && af.fault_type.toLowerCase() === f.id.toLowerCase())
+                    );
+                    if (match) {
+                      const sevPercent = match.severityPercent || (match.severity === 'CRITICAL' ? 90 : match.severity === 'HIGH' ? 70 : match.severity === 'MEDIUM' ? 50 : 30);
+                      return { ...f, active: true, severityPercent: sevPercent, timestampInjected: f.timestampInjected || new Date().toLocaleTimeString() };
+                    }
+                    return f;
+                  })
+                );
+              }
             }
           } catch (e) {
             console.error('Error parsing backend WS message:', e);
