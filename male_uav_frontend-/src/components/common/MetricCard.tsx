@@ -35,7 +35,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       case 'HIGHLIGHT':
         return 'border-blue-500/40 bg-blue-950/20 hover:border-blue-400';
       default:
-        return 'border-[#2A2D33] bg-[#15171A]/80 hover:border-gray-600';
+        return 'border-[var(--border)] bg-[var(--surface-elevated)]/80 hover:border-gray-600';
     }
   };
 
@@ -73,7 +73,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             )}
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono-code font-bold text-2xl tracking-tight text-white">
+            <span className="font-mono-code font-bold text-2xl tracking-tight text-[var(--text-primary)]">
               {value}
             </span>
             {unit && (
@@ -92,7 +92,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       </div>
 
       {(change || subtext) && (
-        <div className="mt-2 pt-2 border-t border-[#2A2D33] flex items-center justify-between text-[10px] font-mono-code">
+        <div className="mt-2 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] font-mono-code">
           {change && (
             <span className={`font-semibold ${getChangeColor()}`}>
               {change}

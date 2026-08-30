@@ -181,7 +181,7 @@ export const DigitalTwinPage: React.FC = () => {
               onClick={() => setActiveLayer(layer)}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center gap-1.5 ${
                 activeLayer === layer
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-[var(--text-primary)] shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >

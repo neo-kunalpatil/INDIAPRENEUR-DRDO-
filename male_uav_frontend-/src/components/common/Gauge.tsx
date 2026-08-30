@@ -56,7 +56,7 @@ export const Gauge: React.FC<GaugeProps> = ({
   const diffFromExpected = expectedValue !== undefined ? value - expectedValue : null;
 
   return (
-    <div className="flex flex-col items-center justify-center p-3.5 bg-[#15171A]/80 panel-border rounded relative overflow-hidden group hover:border-gray-600 transition-all">
+    <div className="flex flex-col items-center justify-center p-3.5 bg-[var(--surface-elevated)]/80 panel-border rounded relative overflow-hidden group hover:border-gray-600 transition-all">
       <div className="scan-line" />
       
       {/* Top Label & Status */}
@@ -85,7 +85,7 @@ export const Gauge: React.FC<GaugeProps> = ({
             cy={center}
             r={radius}
             fill="none"
-            stroke="#1F242D"
+            stroke="var(--border)"
             strokeWidth={strokeWidth}
             strokeDasharray={`${arcLength} ${circumference}`}
             strokeLinecap="round"
@@ -108,7 +108,7 @@ export const Gauge: React.FC<GaugeProps> = ({
 
         {/* Center Digital Readout */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
-          <span className="font-mono-code font-bold text-xl md:text-2xl tracking-wider text-white">
+          <span className="font-mono-code font-bold text-xl md:text-2xl tracking-wider text-[var(--text-primary)]">
             {value.toFixed(decimals)}
           </span>
           <span className="text-[10px] font-mono-code text-blue-400 uppercase tracking-widest">
@@ -118,7 +118,7 @@ export const Gauge: React.FC<GaugeProps> = ({
       </div>
 
       {/* Footer Details: Range & Expected Comparison */}
-      <div className="w-full flex items-center justify-between text-[10px] font-mono-code text-gray-500 mt-1 pt-1.5 border-t border-[#2A2D33] z-10">
+      <div className="w-full flex items-center justify-between text-[10px] font-mono-code text-gray-500 mt-1 pt-1.5 border-t border-[var(--border)] z-10">
         <span>MIN: {min}</span>
         {diffFromExpected !== null && (
           <span className={`${diffFromExpected > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>

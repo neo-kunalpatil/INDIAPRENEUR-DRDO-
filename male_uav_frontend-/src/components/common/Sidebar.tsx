@@ -61,11 +61,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
       className={`border-r transition-all duration-300 flex flex-col z-30 shrink-0 select-none ${
         nightVisionMode 
           ? 'bg-emerald-950/80 border-emerald-900 text-emerald-200' 
-          : 'bg-[#111318] border-[#2A2D33] text-[#E0E2E5]'
+          : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-primary)]'
       } ${isCollapsed ? 'w-16' : 'w-64'}`}
     >
       {/* Sidebar Top Search / Toggle */}
-      <div className="p-3 border-b border-[#2A2D33] flex items-center justify-between gap-2">
+      <div className="p-3 border-b border-[var(--border)] flex items-center justify-between gap-2">
         {!isCollapsed ? (
           <div className="relative flex-1">
             <Search className="w-3.5 h-3.5 text-gray-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
               placeholder="Filter modules..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#15171A] border border-[#2A2D33] rounded pl-8 pr-2 py-1 text-xs text-[#E0E2E5] placeholder:text-gray-500 font-mono-code focus:outline-none focus:border-blue-500"
+              className="w-full bg-[var(--surface-elevated)] border border-[var(--border)] rounded pl-8 pr-2 py-1 text-xs text-[var(--text-primary)] placeholder:text-gray-500 font-mono-code focus:outline-none focus:border-blue-500"
             />
           </div>
         ) : (
@@ -84,7 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
         )}
         <button
           onClick={onToggleCollapse}
-          className="p-1 text-gray-400 hover:text-white hover:bg-[#15171A] rounded transition-colors"
+          className="p-1 text-gray-400 hover:text-[var(--text-primary)] hover:bg-[var(--surface-elevated)] rounded transition-colors"
           title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -108,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
               className={`w-full flex items-center gap-3 px-2.5 py-2 rounded text-xs font-medium transition-all group relative ${
                 isActive
                   ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-[#15171A] border border-transparent'
+                  : 'text-gray-400 hover:text-[var(--text-primary)] hover:bg-[var(--surface-elevated)] border border-transparent'
               }`}
               title={isCollapsed ? item.label : undefined}
             >
@@ -123,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
 
               {!isCollapsed && (
                 <div className="flex-1 text-left flex items-center justify-between overflow-hidden">
-                  <span className={`truncate ${isActive ? 'font-bold text-white' : ''}`}>
+                  <span className={`truncate ${isActive ? 'font-bold text-[var(--text-primary)]' : ''}`}>
                     {item.label}
                   </span>
                   {item.badge && (
@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
                       item.badge === 'USP' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' :
                       item.badge === 'LIVE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' :
                       isAlert ? 'bg-red-500/10 text-red-400 border border-red-500/30 animate-pulse' :
-                      'bg-[#15171A] text-gray-400 border border-[#2A2D33]'
+                      'bg-[var(--surface-elevated)] text-gray-400 border border-[var(--border)]'
                     }`}>
                       {item.badge}
                     </span>
@@ -145,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
 
       {/* Selected UAV Telemetry Micro-Card */}
       {!isCollapsed && (
-        <div className="p-3 m-2 bg-[#15171A] border border-[#2A2D33] rounded text-xs font-mono-code">
+        <div className="p-3 m-2 bg-[var(--surface-elevated)] border border-[var(--border)] rounded text-xs font-mono-code">
           <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1">
             <span className="uppercase">ACTIVE TELEMETRY</span>
             <span className="text-emerald-400 flex items-center gap-1">
@@ -153,16 +153,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
               LOCKED
             </span>
           </div>
-          <div className="font-bold text-white truncate">{selectedUav.callsign}</div>
+          <div className="font-bold text-[var(--text-primary)] truncate">{selectedUav.callsign}</div>
           <div className="text-[11px] text-gray-400 truncate">{selectedUav.model}</div>
-          <div className="mt-2 pt-2 border-t border-[#2A2D33] grid grid-cols-2 gap-1 text-[10px]">
+          <div className="mt-2 pt-2 border-t border-[var(--border)] grid grid-cols-2 gap-1 text-[10px]">
             <div>
               <span className="text-gray-500">ALT: </span>
-              <span className="text-white font-bold">{selectedUav.altitudeFt.toLocaleString()} FT</span>
+              <span className="text-[var(--text-primary)] font-bold">{selectedUav.altitudeFt.toLocaleString()} FT</span>
             </div>
             <div>
               <span className="text-gray-500">SPD: </span>
-              <span className="text-white font-bold">{selectedUav.airspeedKts} KTS</span>
+              <span className="text-[var(--text-primary)] font-bold">{selectedUav.airspeedKts} KTS</span>
             </div>
             <div>
               <span className="text-gray-500">FUEL: </span>
@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
       )}
 
       {/* Sidebar Footer info */}
-      <div className="p-2 border-t border-[#2A2D33] text-[10px] font-mono-code text-gray-500 flex items-center justify-between">
+      <div className="p-2 border-t border-[var(--border)] text-[10px] font-mono-code text-gray-500 flex items-center justify-between">
         {!isCollapsed ? (
           <>
             <span>DRDO-ADE // NODE 03</span>

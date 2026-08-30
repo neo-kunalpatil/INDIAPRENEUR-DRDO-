@@ -82,7 +82,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-[#0A0B0D] text-[#E0E2E5] flex flex-col selection:bg-blue-500/30 selection:text-white ${
+    <div className={`min-h-screen bg-[var(--background)] text-[var(--text-primary)] flex flex-col selection:bg-blue-500/30 selection:text-[var(--text-primary)] ${
       nightVisionMode ? 'theme-night-vision' : ''
     }`}>
       {/* Tactical Header Navbar */}
@@ -94,7 +94,7 @@ const MainLayout: React.FC = () => {
         <Sidebar />
 
         {/* Dynamic Main Viewport Canvas */}
-        <main className="flex-1 overflow-y-auto bg-[#0A0B0D] relative grid-bg custom-scrollbar">
+        <main className="flex-1 overflow-y-auto bg-[var(--background)] relative grid-bg custom-scrollbar">
           <div className="relative z-10">
             {renderActiveView()}
           </div>
@@ -102,7 +102,7 @@ const MainLayout: React.FC = () => {
       </div>
 
       {/* Professional Polish Tactical Footer */}
-      <footer className="h-9 bg-[#111318] border-t border-[#2A2D33] px-4 sm:px-6 flex items-center justify-between text-[10px] text-gray-400 uppercase monospace shrink-0 z-20">
+      <footer className="h-9 bg-[var(--surface)] border-t border-[var(--border)] px-4 sm:px-6 flex items-center justify-between text-[10px] text-gray-400 uppercase monospace shrink-0 z-20">
         <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto">
           <div className="flex items-center gap-1.5 whitespace-nowrap">
             <span className="w-2 h-2 rounded-full bg-emerald-500 led-glow"></span>

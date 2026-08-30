@@ -40,7 +40,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <div id="dashboard-overview" className="p-4 space-y-4 max-w-[1920px] mx-auto">
       {/* Tactical Mission Banner / Quick Status */}
-      <div className="bg-[#111318]/90 panel-border rounded p-4 shadow-xl relative overflow-hidden">
+      <div className="bg-[var(--surface)]/90 panel-border rounded p-4 shadow-xl relative overflow-hidden">
         <div className="scan-line" />
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 relative z-10">
           <div>
@@ -52,11 +52,11 @@ export const DashboardPage: React.FC = () => {
                 Zone: {selectedUav.location.region}
               </span>
             </div>
-            <h1 className="font-bold text-xl md:text-2xl text-white flex items-center gap-2">
+            <h1 className="font-bold text-xl md:text-2xl text-[var(--text-primary)] flex items-center gap-2">
               <span>{mission.codeName}</span>
             </h1>
             <p className="text-xs text-gray-400 font-mono-code mt-0.5">
-              Assigned Platform: <strong className="text-blue-400">{selectedUav.callsign}</strong> • Powerplant: <strong className="text-gray-200">Rotax 914-TC 115 HP Aero Piston</strong>
+              Assigned Platform: <strong className="text-blue-400">{selectedUav.callsign}</strong> • Powerplant: <strong className="text-[var(--text-primary)]">Rotax 914-TC 115 HP Aero Piston</strong>
             </p>
           </div>
 
@@ -64,21 +64,21 @@ export const DashboardPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveTab('live-monitoring')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-200 border border-[#2A2D33] text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[var(--surface-elevated)] hover:bg-[var(--border)] text-[var(--text-primary)] border border-[var(--border)] text-xs font-semibold transition-all"
             >
               <Activity className="w-4 h-4 text-blue-400" />
               <span>Telemetry SCADA</span>
             </button>
             <button
               onClick={() => setActiveTab('digital-twin')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-200 border border-[#2A2D33] text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[var(--surface-elevated)] hover:bg-[var(--border)] text-[var(--text-primary)] border border-[var(--border)] text-xs font-semibold transition-all"
             >
               <Cpu className="w-4 h-4 text-blue-400" />
               <span>3D Digital Twin</span>
             </button>
             <button
               onClick={() => setActiveTab('fault-injection')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#15171A] hover:bg-[#2A2D33] text-gray-200 border border-[#2A2D33] text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[var(--surface-elevated)] hover:bg-[var(--border)] text-[var(--text-primary)] border border-[var(--border)] text-xs font-semibold transition-all"
             >
               <Sliders className="w-4 h-4 text-amber-400" />
               <span>Fault Simulator</span>
@@ -145,9 +145,9 @@ export const DashboardPage: React.FC = () => {
       {/* Main Command Center Layout: Gauges & Engine Heartbeat */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left 4 Cols: Essential SCADA Gauges */}
-        <div className="lg:col-span-4 bg-[#15171A]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-4 bg-[var(--surface-elevated)]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
           <div className="scan-line" />
-          <div className="flex items-center justify-between border-b border-[#2A2D33] pb-2 mb-3">
+          <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
             <div className="flex items-center gap-2">
               <GaugeIcon className="w-4 h-4 text-blue-400" />
               <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest">
@@ -203,7 +203,7 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
 
-          <div className="mt-3 pt-2.5 border-t border-[#2A2D33] flex items-center justify-between text-xs">
+          <div className="mt-3 pt-2.5 border-t border-[var(--border)] flex items-center justify-between text-xs">
             <span className="text-gray-400 font-mono-code text-[11px] uppercase">Knock Index:</span>
             <span className={`font-mono-code font-bold ${telemetry.knockIndex > 0.4 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
               {telemetry.knockIndex.toFixed(2)} / 1.00 {telemetry.knockIndex > 0.4 ? '(DETONATION RISK)' : '(SAFE)'}
@@ -212,9 +212,9 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Center 5 Cols: 4-Cylinder Thermal Distribution & Subsystems */}
-        <div className="lg:col-span-5 bg-[#15171A]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-5 bg-[var(--surface-elevated)]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
           <div className="scan-line" />
-          <div className="flex items-center justify-between border-b border-[#2A2D33] pb-2 mb-3">
+          <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
             <div className="flex items-center gap-2">
               <Flame className="w-4 h-4 text-amber-400" />
               <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest">
@@ -232,17 +232,17 @@ export const DashboardPage: React.FC = () => {
               const isHot = cht > 125 || egt > 820;
 
               return (
-                <div key={idx} className="p-2.5 rounded bg-[#0A0B0D]/80 border border-[#2A2D33] text-xs">
+                <div key={idx} className="p-2.5 rounded bg-[var(--background)]/80 border border-[var(--border)] text-xs">
                   <div className="flex items-center justify-between font-mono-code mb-1">
                     <span className="font-bold text-blue-400">CYLINDER #{idx + 1}</span>
                     <div className="flex items-center gap-3">
-                      <span className="text-gray-400">CHT: <strong className={cht > 125 ? 'text-red-400' : 'text-white'}>{cht}°C</strong></span>
+                      <span className="text-gray-400">CHT: <strong className={cht > 125 ? 'text-red-400' : 'text-[var(--text-primary)]'}>{cht}°C</strong></span>
                       <span className="text-gray-400">EGT: <strong className={eggtColor(egt)}>{egt}°C</strong></span>
                     </div>
                   </div>
 
                   {/* Visual Thermal Gradient Bar */}
-                  <div className="w-full bg-[#1F242D] h-1.5 rounded-full overflow-hidden flex">
+                  <div className="w-full bg-[var(--border)] h-1.5 rounded-full overflow-hidden flex">
                     <div
                       className={`h-full transition-all duration-500 ${
                         isHot ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-blue-500 to-emerald-400'
@@ -255,17 +255,17 @@ export const DashboardPage: React.FC = () => {
             })}
           </div>
 
-          <div className="mt-3 pt-2 border-t border-[#2A2D33] flex items-center justify-between text-[11px] font-mono-code text-gray-400">
-            <span>Fuel Flow: <strong className="text-white">{telemetry.fuelFlowLitersHr} L/h</strong></span>
-            <span>Coolant: <strong className="text-white">{telemetry.coolantTempC}°C</strong></span>
-            <span>Oil Temp: <strong className="text-white">{telemetry.oilTempC}°C</strong></span>
+          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[11px] font-mono-code text-gray-400">
+            <span>Fuel Flow: <strong className="text-[var(--text-primary)]">{telemetry.fuelFlowLitersHr} L/h</strong></span>
+            <span>Coolant: <strong className="text-[var(--text-primary)]">{telemetry.coolantTempC}°C</strong></span>
+            <span>Oil Temp: <strong className="text-[var(--text-primary)]">{telemetry.oilTempC}°C</strong></span>
           </div>
         </div>
 
         {/* Right 3 Cols: Fleet Squadron Summary & Active Injected Anomalies */}
-        <div className="lg:col-span-3 bg-[#15171A]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-3 bg-[var(--surface-elevated)]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
           <div className="scan-line" />
-          <div className="flex items-center justify-between border-b border-[#2A2D33] pb-2 mb-2">
+          <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-2">
             <div className="flex items-center gap-2">
               <Radio className="w-4 h-4 text-emerald-400" />
               <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest">
@@ -289,11 +289,11 @@ export const DashboardPage: React.FC = () => {
                 className={`p-2 rounded border text-xs font-mono-code cursor-pointer transition-all ${
                   uav.id === selectedUav.id
                     ? 'bg-blue-500/10 border-blue-500/40 text-blue-300 shadow-sm'
-                    : 'bg-[#0A0B0D]/60 border-[#2A2D33] hover:border-gray-600 text-gray-300'
+                    : 'bg-[var(--background)]/60 border-[var(--border)] hover:border-gray-600 text-[var(--text-primary)]'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold truncate text-white">{uav.callsign.split(' ')[0]}</span>
+                  <span className="font-bold truncate text-[var(--text-primary)]">{uav.callsign.split(' ')[0]}</span>
                   <span className={`font-bold ${uav.engineHealthIndex > 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
                     {uav.engineHealthIndex.toFixed(0)}%
                   </span>
@@ -307,7 +307,7 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Injected Fault Indicator Box */}
-          <div className="mt-3 p-2.5 rounded bg-[#0A0B0D] border border-[#2A2D33]">
+          <div className="mt-3 p-2.5 rounded bg-[var(--background)] border border-[var(--border)]">
             <div className="flex items-center justify-between text-[10px] font-mono-code font-bold mb-1">
               <span className="text-gray-400 uppercase">ACTIVE INJECTED FAULTS:</span>
               <span className={activeInjectedFaults.length > 0 ? 'text-red-400' : 'text-emerald-400'}>
@@ -330,9 +330,9 @@ export const DashboardPage: React.FC = () => {
       {/* Bottom Row: AI Insights & Tactical Alert Feeds */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* AI Predictive Insight Card (7 Cols) */}
-        <div className="lg:col-span-7 bg-[#15171A]/80 panel-border rounded p-4 relative overflow-hidden">
+        <div className="lg:col-span-7 bg-[var(--surface-elevated)]/80 panel-border rounded p-4 relative overflow-hidden">
           <div className="scan-line" />
-          <div className="flex items-center justify-between border-b border-[#2A2D33] pb-2 mb-3">
+          <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-blue-400" />
               <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest">
@@ -345,9 +345,9 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs mb-3">
-            <div className="p-3 rounded bg-[#0A0B0D]/80 border border-[#2A2D33]">
+            <div className="p-3 rounded bg-[var(--background)]/80 border border-[var(--border)]">
               <span className="text-gray-500 text-[10px] font-mono-code block mb-1 uppercase">Acoustic / Vibration</span>
-              <div className="font-mono-code font-bold text-lg text-white">
+              <div className="font-mono-code font-bold text-lg text-[var(--text-primary)]">
                 {telemetry.vibrationRmsMmS} mm/s
               </div>
               <p className="text-[10px] text-gray-400 mt-1">
@@ -355,9 +355,9 @@ export const DashboardPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-3 rounded bg-[#0A0B0D]/80 border border-[#2A2D33]">
+            <div className="p-3 rounded bg-[var(--background)]/80 border border-[var(--border)]">
               <span className="text-gray-500 text-[10px] font-mono-code block mb-1 uppercase">Air-Fuel Mixture</span>
-              <div className="font-mono-code font-bold text-lg text-white">
+              <div className="font-mono-code font-bold text-lg text-[var(--text-primary)]">
                 λ {telemetry.lambdaAirFuelRatio}
               </div>
               <p className="text-[10px] text-gray-400 mt-1">
@@ -365,9 +365,9 @@ export const DashboardPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-3 rounded bg-[#0A0B0D]/80 border border-[#2A2D33]">
+            <div className="p-3 rounded bg-[var(--background)]/80 border border-[var(--border)]">
               <span className="text-gray-500 text-[10px] font-mono-code block mb-1 uppercase">Turbo Efficiency</span>
-              <div className="font-mono-code font-bold text-lg text-white">
+              <div className="font-mono-code font-bold text-lg text-[var(--text-primary)]">
                 {(telemetry.turbochargerRpm / 1000).toFixed(0)}k RPM
               </div>
               <p className="text-[10px] text-gray-400 mt-1">
@@ -400,9 +400,9 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Real-time Alert Stream (5 Cols) */}
-        <div className="lg:col-span-5 bg-[#15171A]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-5 bg-[var(--surface-elevated)]/80 panel-border rounded p-4 flex flex-col justify-between relative overflow-hidden">
           <div className="scan-line" />
-          <div className="flex items-center justify-between border-b border-[#2A2D33] pb-2 mb-2">
+          <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-2">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400" />
               <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest">
@@ -424,20 +424,20 @@ export const DashboardPage: React.FC = () => {
                 className={`p-2.5 rounded border text-xs font-mono-code transition-all ${
                   alert.severity === 'CRITICAL' ? 'bg-red-950/30 border-red-500/40 text-red-200' :
                   alert.severity === 'WARNING' ? 'bg-amber-950/30 border-amber-500/40 text-amber-200' :
-                  'bg-[#0A0B0D]/80 border-[#2A2D33] text-gray-300'
+                  'bg-[var(--background)]/80 border-[var(--border)] text-[var(--text-primary)]'
                 }`}
               >
                 <div className="flex items-center justify-between text-[10px] mb-0.5">
                   <span className="font-bold uppercase tracking-wider">{alert.severity} • {alert.uavCallsign.split(' ')[0]}</span>
                   <span className="text-gray-400">{alert.timestamp}</span>
                 </div>
-                <div className="font-bold text-white truncate">{alert.title}</div>
+                <div className="font-bold text-[var(--text-primary)] truncate">{alert.title}</div>
                 <div className="text-[10px] text-gray-400 truncate mt-0.5">{alert.suggestedAction}</div>
               </div>
             ))}
           </div>
 
-          <div className="mt-2 pt-2 border-t border-[#2A2D33] flex items-center justify-between text-[10px] font-mono-code text-gray-500 uppercase">
+          <div className="mt-2 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] font-mono-code text-gray-500 uppercase">
             <span>Audit Trail: Encrypted</span>
             <span>Telemetry: 20 Hz</span>
           </div>
@@ -450,5 +450,5 @@ export const DashboardPage: React.FC = () => {
 function eggtColor(egt: number) {
   if (egt > 820) return 'text-red-400';
   if (egt > 790) return 'text-amber-400';
-  return 'text-white';
+  return 'text-[var(--text-primary)]';
 }

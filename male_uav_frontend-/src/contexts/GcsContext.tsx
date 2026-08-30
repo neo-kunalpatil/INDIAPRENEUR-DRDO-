@@ -76,6 +76,8 @@ interface GcsContextType {
   resetTelemetryToNormal: () => void;
   customRulOffsetHours: number;
   setCustomRulOffsetHours: (hrs: number) => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
 }
 
 const GcsContext = createContext<GcsContextType | undefined>(undefined);
@@ -92,7 +94,29 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mission] = useState<MissionProfile>(MOCK_ACTIVE_MISSION);
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [currentTourStep, setCurrentTourStep] = useState<number>(0);
+
   const [customRulOffsetHours, setCustomRulOffsetHours] = useState<number>(0);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gcs_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('gcs_theme', theme);
+    if (theme === 'light') {
+      document.body.classList.add('theme-light');
+    } else {
+      document.body.classList.remove('theme-light');
+    }
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  }, []);
+
 
   const selectedUav = uavFleet.find(u => u.id === selectedUavId) || uavFleet[0];
 
@@ -517,6 +541,8 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         resetTelemetryToNormal,
         customRulOffsetHours,
         setCustomRulOffsetHours,
+        theme,
+        toggleTheme,
       }}
     >
       {children}

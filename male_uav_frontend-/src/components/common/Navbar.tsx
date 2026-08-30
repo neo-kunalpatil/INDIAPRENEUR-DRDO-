@@ -15,10 +15,15 @@ import {
   AlertTriangle,
   RotateCcw,
   Clock,
-  Compass
+  Compass,
+  Sun,
+  User,
+  Check,
+  ChevronDown
 } from 'lucide-react';
 import { useGcs } from '../../contexts/GcsContext';
 import { FACILITY_NAME } from '../../constants';
+import { ProjectLeadDropdown } from './ProjectLeadDropdown';
 
 interface NavbarProps {
   onToggleChat: () => void;
@@ -73,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
     <header className={`w-full border-b transition-colors z-40 ${
       nightVisionMode 
         ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-300' 
-        : 'bg-[#111318] border-[#2A2D33] text-[#E0E2E5]'
+        : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-primary)]'
     } backdrop-blur-md sticky top-0`}>
       {/* Top micro classification banner */}
       <div className="w-full bg-[#171012] border-b border-red-900/40 py-0.5 px-4 flex items-center justify-between text-[11px] font-mono-code font-bold tracking-widest text-red-400">
@@ -92,7 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
       <div className="px-4 py-2 flex items-center justify-between gap-3">
         {/* Left: DRDO Insignia & UAV Select */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 border-r border-[#2A2D33] pr-3.5">
+          <div className="flex items-center gap-2.5 border-r border-[var(--border)] pr-3.5">
             <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shadow-lg text-blue-400">
               <Shield className="w-4 h-4" />
             </div>
@@ -110,16 +115,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
           </div>
 
           {/* Active UAV Selector */}
-          <div className="flex items-center gap-2 bg-[#15171A] border border-[#2A2D33] rounded px-2.5 py-1">
+          <div className="flex items-center gap-2 bg-[var(--surface-elevated)] border border-[var(--border)] rounded px-2.5 py-1">
             <Radio className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
             <span className="text-[10px] font-mono-code text-gray-400 uppercase">UAV:</span>
             <select
               value={selectedUav.id}
               onChange={(e) => setSelectedUavId(e.target.value)}
-              className="bg-transparent text-xs font-semibold text-white outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs font-semibold text-[var(--text-primary)] outline-none cursor-pointer pr-1"
             >
               {uavFleet.map((uav) => (
-                <option key={uav.id} value={uav.id} className="bg-[#111318] text-white">
+                <option key={uav.id} value={uav.id} className="bg-[var(--surface)] text-[var(--text-primary)]">
                   {uav.callsign} ({uav.engineHealthIndex.toFixed(0)}% HLT)
                 </option>
               ))}
@@ -131,10 +136,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
           </div>
 
           {/* Mission Tag */}
-          <div className="hidden xl:flex items-center gap-2 bg-[#15171A] border border-[#2A2D33] rounded px-2.5 py-1 text-xs">
+          <div className="hidden xl:flex items-center gap-2 bg-[var(--surface-elevated)] border border-[var(--border)] rounded px-2.5 py-1 text-xs">
             <Compass className="w-3.5 h-3.5 text-blue-400" />
             <span className="text-[10px] font-mono-code text-gray-400 uppercase">MSN:</span>
-            <span className="font-mono-code font-bold text-white text-xs">{mission.codeName.split(' - ')[0]}</span>
+            <span className="font-mono-code font-bold text-[var(--text-primary)] text-xs">{mission.codeName.split(' - ')[0]}</span>
             <span className="px-1.5 py-0.5 rounded text-[9px] font-mono-code font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
               {mission.phase.replace(/_/g, ' ')}
             </span>
@@ -143,7 +148,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
 
         {/* Center: Tactical Key Indicators */}
         <div className="hidden lg:flex items-center gap-4">
-          <div className="flex items-center gap-3 bg-[#15171A] border border-[#2A2D33] rounded px-3 py-1 text-xs font-mono-code">
+          <div className="flex items-center gap-3 bg-[var(--surface-elevated)] border border-[var(--border)] rounded px-3 py-1 text-xs font-mono-code">
             <div className="flex items-center gap-1.5">
               <span className="text-gray-400 text-[10px] uppercase">Engine HLT:</span>
               <span className={`font-bold ${
@@ -153,17 +158,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
                 {selectedUav.engineHealthIndex.toFixed(1)}%
               </span>
             </div>
-            <div className="h-3 w-px bg-[#2A2D33]" />
+            <div className="h-3 w-px bg-[var(--border)]" />
             <div className="flex items-center gap-1.5">
               <span className="text-gray-400 text-[10px] uppercase">RUL:</span>
               <span className="font-bold text-blue-400">{selectedUav.predictedRulHours} hrs</span>
             </div>
-            <div className="h-3 w-px bg-[#2A2D33]" />
+            <div className="h-3 w-px bg-[var(--border)]" />
             <div className="flex items-center gap-1.5">
               <span className="text-gray-400 text-[10px] uppercase">Twin Sync:</span>
               <span className="font-bold text-emerald-400">{selectedUav.twinConfidenceScore}%</span>
             </div>
-            <div className="h-3 w-px bg-[#2A2D33]" />
+            <div className="h-3 w-px bg-[var(--border)]" />
             <div className="flex items-center gap-1.5">
               <span className="text-gray-400 text-[10px] uppercase">Decision:</span>
               <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
@@ -179,9 +184,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
         {/* Right: Telemetry Controls & Clocks */}
         <div className="flex items-center gap-2">
           {/* Dual Clock in exact theme format */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-[#15171A] rounded border border-[#2A2D33]">
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-[var(--surface-elevated)] rounded border border-[var(--border)]">
             <span className="text-[10px] font-bold text-gray-400 uppercase">UTC</span>
-            <span className="text-xs font-mono-code font-bold text-white">{utcTime.replace(' UTC', '')}</span>
+            <span className="text-xs font-mono-code font-bold text-[var(--text-primary)]">{utcTime.replace(' UTC', '')}</span>
           </div>
 
           {/* Demo Tour Button (For Judges / Evaluators) */}
@@ -194,12 +199,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
             <span className="hidden sm:inline">JUDGE TOUR</span>
           </button>
 
+          <ProjectLeadDropdown />
+
           {/* Quick Simulation Toggles */}
-          <div className="flex items-center bg-[#15171A] border border-[#2A2D33] rounded p-0.5">
+          <div className="flex items-center bg-[var(--surface-elevated)] border border-[var(--border)] rounded p-0.5">
             <button
               onClick={toggleSimulation}
               className={`p-1.5 rounded text-xs transition-colors ${
-                isSimulationRunning ? 'text-emerald-400 hover:bg-[#2A2D33]' : 'text-amber-400 bg-amber-950/60'
+                isSimulationRunning ? 'text-emerald-400 hover:bg-[var(--border)]' : 'text-amber-400 bg-amber-950/60'
               }`}
               title={isSimulationRunning ? 'Pause live telemetry stream' : 'Resume live stream'}
             >
@@ -207,7 +214,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
             </button>
             <button
               onClick={resetTelemetryToNormal}
-              className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-[#2A2D33] rounded transition-colors"
+              className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-[var(--border)] rounded transition-colors"
               title="Reset all engine parameters to nominal"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -220,7 +227,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
             className={`p-2 rounded border transition-colors ${
               voiceAlertsEnabled 
                 ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' 
-                : 'bg-[#15171A] border-[#2A2D33] text-gray-500'
+                : 'bg-[var(--surface-elevated)] border-[var(--border)] text-gray-500'
             }`}
             title={voiceAlertsEnabled ? 'Acoustic Voice Alerts Enabled' : 'Voice Alerts Muted'}
           >
@@ -233,7 +240,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
             className={`p-2 rounded border transition-colors hidden sm:flex ${
               nightVisionMode 
                 ? 'bg-emerald-900/60 border-emerald-600 text-emerald-300' 
-                : 'bg-[#15171A] border-[#2A2D33] text-gray-400 hover:text-white'
+                : 'bg-[var(--surface-elevated)] border-[var(--border)] text-gray-400 hover:text-[var(--text-primary)]'
             }`}
             title="Toggle Tactical Night HUD filter"
           >
@@ -246,7 +253,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
             className={`p-2 rounded border transition-colors relative ${
               isChatOpen 
                 ? 'bg-blue-900/30 border-blue-500/50 text-blue-300' 
-                : 'bg-[#15171A] border-[#2A2D33] text-gray-400 hover:text-blue-400'
+                : 'bg-[var(--surface-elevated)] border-[var(--border)] text-gray-400 hover:text-blue-400'
             }`}
             title="Open AI Tactical Copilot Assistant"
           >
@@ -257,7 +264,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
           {/* Alerts Bell */}
           <button
             onClick={() => setActiveTab('alerts')}
-            className="p-2 rounded bg-[#15171A] border border-[#2A2D33] text-gray-300 hover:text-red-400 relative transition-colors"
+            className="p-2 rounded bg-[var(--surface-elevated)] border border-[var(--border)] text-[var(--text-primary)] hover:text-red-400 relative transition-colors"
             title="Open Alarm Center"
           >
             <Bell className="w-4 h-4" />
@@ -271,7 +278,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
           {/* Fullscreen */}
           <button
             onClick={toggleFullScreen}
-            className="p-2 rounded bg-[#15171A] border border-[#2A2D33] text-gray-400 hover:text-blue-400 transition-colors hidden md:flex"
+            className="p-2 rounded bg-[var(--surface-elevated)] border border-[var(--border)] text-gray-400 hover:text-blue-400 transition-colors hidden md:flex"
             title="Toggle Fullscreen GCS Display"
           >
             <Maximize2 className="w-4 h-4" />

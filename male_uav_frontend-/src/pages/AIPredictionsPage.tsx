@@ -177,7 +177,7 @@ export const AIPredictionsPage: React.FC = () => {
               onClick={() => setSelectedProfile(prof)}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
                 selectedProfile === prof
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-[var(--text-primary)] shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >

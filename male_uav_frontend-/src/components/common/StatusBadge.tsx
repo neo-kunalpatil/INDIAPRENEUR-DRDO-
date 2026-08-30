@@ -53,8 +53,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md', p
       case 'INFO':
       default:
         return {
-          bg: 'bg-[#15171A]',
-          border: 'border-[#2A2D33]',
+          bg: 'bg-[var(--surface-elevated)]',
+          border: 'border-[var(--border)]',
           text: 'text-gray-400',
           dot: 'bg-gray-500',
           label: status,
