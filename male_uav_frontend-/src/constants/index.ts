@@ -20,6 +20,7 @@ export const NAV_ITEMS = [
   { id: 'continuous-learning', label: 'Continuous Learning', path: '/continuous-learning', icon: 'Sparkles', badge: 'ADAPTIVE' },
   { id: 'reports', label: 'Intelligence Reports', path: '/reports', icon: 'FileText', badge: 'DOCX/PDF' },
   { id: 'system-health', label: 'System Architecture', path: '/system-health', icon: 'ShieldCheck', badge: '99.98%' },
+  { id: 'garuda-ai', label: 'GARUDA-AI', path: '/garuda-ai', icon: 'Terminal', badge: 'AI/OPS' },
 ];
 
 export const MOCK_UAV_FLEET: UavUnit[] = [

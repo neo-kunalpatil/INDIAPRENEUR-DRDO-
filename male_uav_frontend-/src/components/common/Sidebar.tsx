@@ -20,7 +20,8 @@ import {
   ChevronDown,
   Search,
   ExternalLink,
-  Layers
+  Layers,
+  Terminal
 } from 'lucide-react';
 import { useGcs } from '../../contexts/GcsContext';
 import { NAV_ITEMS } from '../../constants';
@@ -64,6 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
     Sparkles: <Sparkles className="w-4 h-4" />,
     FileText: <FileText className="w-4 h-4" />,
     ShieldCheck: <ShieldCheck className="w-4 h-4" />,
+    Terminal: <Terminal className="w-4 h-4" />,
   };
 
   const topItems = NAV_ITEMS.filter(item => !moreModuleIds.includes(item.id));
