@@ -1,3 +1,4 @@
+import { API_URL, WS_URL } from '../config/env';
 import React, { useState } from 'react';
 
 export const GarudaAIPanel: React.FC = () => {
@@ -36,7 +37,7 @@ export const GarudaAIPanel: React.FC = () => {
       };
 
       
-      const res = await fetch(`${API_BASE_URL}/api/garuda/analyze`, {
+      const res = await fetch(`${API_URL}/api/garuda/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
