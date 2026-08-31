@@ -9,6 +9,8 @@ logger = logging.getLogger("SimulatorWebSocketClient")
 class SimulatorWebSocketClient:
     def __init__(self):
         self.url = settings.SIMULATOR_WS
+        if not self.url:
+            logger.error("SIMULATOR_WS environment variable is not set!")
         self.running = False
         self.reconnect_interval = 2.0
 
@@ -16,6 +18,11 @@ class SimulatorWebSocketClient:
         self.running = True
         while self.running:
             try:
+                if not self.url:
+                    logger.error("Cannot connect: SIMULATOR_WS is not configured.")
+                    await asyncio.sleep(self.reconnect_interval)
+                    continue
+
                 logger.info(f"Connecting to Simulator WebSocket at {self.url}...")
                 async with websockets.connect(self.url) as ws:
                     logger.info("Successfully connected to Simulator WebSocket!")
