@@ -41,7 +41,9 @@ async def lifespan(app: FastAPI):
         logger.warning("TIMESCALE_DATABASE_URL is not set!")
     ws_task = asyncio.create_task(simulator_ws_client.start())
     yield
-    logger.info("Shutting down Main Backend Service Gateway...")
+    import traceback
+    logger.info("Shutting down Main Backend Service Gateway... capturing stack trace:")
+    logger.info(''.join(traceback.format_stack()))
     simulator_ws_client.stop()
     ws_task.cancel()
 
@@ -154,11 +156,14 @@ async def get_system_startup_state():
         ]
     }
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    return {"status": "alive"}
+    return {
+        "service": "DRDO Digital Twin Gateway",
+        "status": "running"
+    }
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
     return {"status": "ok", "service": "backend-service", "version": "4.2.8"}
 

@@ -302,11 +302,14 @@ async def get_alerts():
 async def get_system():
     return {"status": "HEALTHY", "version": "4.2.8"}
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    return {"status": "alive"}
+    return {
+        "service": "DRDO Digital Twin Simulator",
+        "status": "running"
+    }
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def get_health():
     return {"status": "ok"}
 
