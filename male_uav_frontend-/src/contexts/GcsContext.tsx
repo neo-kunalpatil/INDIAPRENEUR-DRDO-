@@ -8,6 +8,7 @@ import {
   AlertNotification,
   DemoTourStep 
 } from '../types';
+import {
   MOCK_UAV_FLEET, 
   MOCK_ACTIVE_MISSION, 
   PRESET_FAULTS, 
@@ -128,11 +129,11 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .then(data => {
         if (data) {
           if (data.telemetry) {
-            setTelemetry(Number(prev => ({
+            setTelemetry(prev => ({
               ...prev,
               rpm: data.telemetry.rpm || prev.rpm,
               oilTempC: data.telemetry.oil_temp_c || prev.oilTempC,
-              oilPressureBar: data.telemetry.oil_pressure_kpa ? Number((data.telemetry.oil_pressure_kpa / 100) || 0).toFixed(2)) : prev.oilPressureBar,
+              oilPressureBar: data.telemetry.oil_pressure_kpa ? Number((data.telemetry.oil_pressure_kpa / 100) || 0).toFixed(2) : prev.oilPressureBar,
               chtC: Array.isArray(data.telemetry.cht_c) ? data.telemetry.cht_c : prev.chtC,
               egtC: Array.isArray(data.telemetry.egt_c) ? data.telemetry.egt_c : prev.egtC,
               turboBoostBar: data.telemetry.turbo_boost || prev.turboBoostBar,
@@ -200,7 +201,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [uavFleet, speakVoiceAlert]);
 
-  // Persistent WebSocket Stream Integration with Main Backend Gateway (Port 8000)
+  // Persistent WebSocket Stream Integration with Main Backend Gateway 
   useEffect(() => {
     let ws: WebSocket | null = null;
     let reconnectTimeout: any = null;
@@ -232,7 +233,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 oilPressureBar: data.oil_pressure_kpa !== undefined ? Number(Number((data.oil_pressure_kpa / 100) || 0).toFixed(2)) : (data.oilPressure !== undefined ? data.oilPressure : prev.oilPressureBar),
                 fuelPressureBar: data.fuel_pressure_kpa !== undefined ? Number(Number((data.fuel_pressure_kpa / 100) || 0).toFixed(2)) : prev.fuelPressureBar,
                 fuelFlowLitersHr: data.fuel_flow_lph !== undefined ? Number((Number(data.fuel_flow_lph) || 0).toFixed(1)) : (data.fuelFlow !== undefined ? data.fuelFlow : prev.fuelFlowLitersHr),
-                chtC: Array.isArray(data.cht_c) ? data.cht_c.map((v: any) => typeof v === 'number' ? Number((Number(v) || 0).toFixed(1)) : v) : (typeof data.cht_c === 'number' ? [Number((Number(data.cht_c) || 0).toFixed(1)), Number(Number((data.cht_c + 1.2) || 0).toFixed(1)), Number(Number((data.cht_c - 0.8) || 0).toFixed(1)), Number(Number((data.cht_c + 0.5) || 0).toFixed(1))] : prev.chtC),
+                chtC: Array.isArray(data.cht_c) ? data.cht_c.map((v: any) => typeof v === 'number' ? Number((Number(v) || 0).toFixed(1)) : v) : (typeof data.cht_c === 'number' ? [Number((Number(data.cht_c) || 0).toFixed(1)), Number((Number(data.cht_c + 1.2) || 0).toFixed(1)), Number((Number(data.cht_c - 0.8) || 0).toFixed(1)), Number((Number(data.cht_c + 0.5) || 0).toFixed(1))] : prev.chtC),
                 egtC: Array.isArray(data.egt_c) ? data.egt_c : (typeof data.egt_c === 'number' ? [Math.round(data.egt_c), Math.round(data.egt_c + 5), Math.round(data.egt_c - 4), Math.round(data.egt_c + 3)] : prev.egtC),
                 turbochargerRpm: data.turbochargerRpm !== undefined ? data.turbochargerRpm : prev.turbochargerRpm,
                 turboBoostBar: data.turbo_boost !== undefined ? Number((Number(data.turbo_boost) || 0).toFixed(2)) : prev.turboBoostBar,
@@ -295,7 +296,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [selectedUavId]);
 
-  // Initial REST fetch from Main Backend Gateway (Port 8000) for active TimescaleDB faults
+  // Initial REST fetch from Main Backend Gateway  for active TimescaleDB faults
   useEffect(() => {
     fetch(`${API_URL}/api/faults?active=true`)
       .then(res => res.json())

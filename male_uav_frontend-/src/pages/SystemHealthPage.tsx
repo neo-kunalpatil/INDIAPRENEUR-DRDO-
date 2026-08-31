@@ -298,7 +298,7 @@ export const SystemHealthPage: React.FC = () => {
         )}
 
         {/* 2. Physics Thermodynamic Engine Panel */}
-        {selectedSubsystem === 'physics' && (Number(
+        {selectedSubsystem === 'physics' && (
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-4 font-mono-code text-xs">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ export const SystemHealthPage: React.FC = () => {
 
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-amber-400 font-bold text-[10px] block uppercase">2. TURBOCHARGER DYNAMICS</span>
-                <div className="text-slate-100 font-bold text-sm">PR: { (telemetry.turboBoostBar + 1.0) || 0).toFixed(2) } : 1</div>
+                <div className="text-slate-100 font-bold text-sm">PR: { ((telemetry.turboBoostBar + 1.0) || 0).toFixed(2) } : 1</div>
                 <div className="text-slate-400 text-[10px]">Comp Efficiency: 76.8%</div>
                 <div className="text-cyan-400 text-[10px]">Turbine Speed: { telemetry.turbochargerRpm.toLocaleString() } RPM</div>
               </div>

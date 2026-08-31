@@ -693,9 +693,9 @@ export const AIPredictionsPage: React.FC = () => {
               return (
                 <div 
                   key={idx}
-                  onClick={() => openMetricInvestigation(Number(`SHAP Feature: ${attr.featureName}`, {
+                  onClick={() => openMetricInvestigation(`SHAP Feature: ${attr.featureName}`, {
                     category: attr.featureCategory,
-                    contribution: `${(attr.contributionScore * 100) || 0).toFixed(0)}%`,
+                    contribution: `%`,
                     observed: attr.currentObservedValue,
                     baseline: attr.baselineValue,
                     explanation: attr.explanation,
@@ -1076,14 +1076,14 @@ export const AIPredictionsPage: React.FC = () => {
               <div className="space-y-2">
                 <h3 className="font-bold text-sm text-cyan-300 border-b border-slate-800 pb-1">3. EXPLAINABLE AI (XAI) SHAP PARAMETER IMPORTANCE</h3>
                 <div className="space-y-1.5">
-                  {shapAttributions.map((a, i) => (Number(
+                  {shapAttributions.map((a, i) => (
                     <div key={i} className="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between items-center text-xs">
                       <div>
                         <span className="font-bold text-slate-200 block">{a.featureName}</span>
                         <span className="text-slate-400 text-[10px]">{a.explanation}</span>
                       </div>
                       <span className={`font-bold ${a.contributionScore > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {(a.contributionScore * 100) || 0).toFixed(0)}% BIAS
+                        {((a.contributionScore * 100) || 0).toFixed(0)}% BIAS
                       </span>
                     </div>
                   ))}
