@@ -8,5 +8,5 @@ export const ENDPOINTS = {
   telemetry: `${API_BASE}/api/telemetry/latest`,
   engine:    `${API_BASE}/api/engine`,
   status:    `${API_BASE}/api/status`,
-  ws:        `${WS_BASE}/stream`,
+  ws: WS_BASE.endsWith('/stream') ? WS_BASE : `${WS_BASE}/stream`,
 };

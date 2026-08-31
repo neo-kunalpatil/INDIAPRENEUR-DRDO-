@@ -207,10 +207,11 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const connectWS = () => {
       try {
-        ws = new WebSocket('ws://localhost:8000/stream');
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+        ws = new WebSocket(`${wsUrl}/stream`);
 
         ws.onopen = () => {
-          console.log('[Main Dashboard] Connected to Main Backend Gateway (ws://localhost:8000/stream)');
+          console.log(`[Main Dashboard] Connected to Main Backend Gateway (${wsUrl}/stream)`);
         };
 
         ws.onmessage = (event) => {

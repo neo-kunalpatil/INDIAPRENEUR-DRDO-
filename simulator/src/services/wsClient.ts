@@ -13,7 +13,7 @@ class WSClient {
     if (typeof window === 'undefined') return;
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
 
-    let url = `${WS_BASE}/stream`;
+    let url = WS_BASE.endsWith('/stream') ? WS_BASE : `${WS_BASE}/stream`;
     
     // If localhost failed previously, fallback to 127.0.0.1 to avoid IPv6 issues
     if (this.useIpFallback) {
@@ -54,7 +54,7 @@ class WSClient {
     };
 
     this.ws.onerror = (e: Event) => {
-      console.warn('[WS] Connection retrying on port 4000...');
+      console.warn('[WS] Connection retrying on backend...');
       useTelemetryStore.getState().setTelemetry({ connected: false });
       
       // Try 127.0.0.1 on next attempt if we were trying localhost

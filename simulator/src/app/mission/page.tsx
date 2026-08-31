@@ -35,7 +35,7 @@ export default function MissionPage() {
       const json = await res.json();
       setCmdResult(`OK: phase=${json.missionPhase || payload.phase} | status=${payload.status || 'OK'}`);
     } catch (e: any) {
-      setCmdResult(`ERROR: ${e.message} — Is backend running on port 4000?`);
+      setCmdResult(`ERROR: ${e.message} â€” Check if backend is reachable.`);
     } finally {
       setLoading(false);
     }
@@ -78,14 +78,14 @@ export default function MissionPage() {
       <div className="flex items-center justify-between border-b border-blue-500 pb-2">
         <h1 className="text-xl font-bold text-white">Mission Control</h1>
         <span className={`text-xs font-bold px-3 py-1 border rounded shadow ${statusColor[liveStatus] || 'text-gray-400 border-gray-600'}`}>
-          {liveStatus} — {livePhase}
+          {liveStatus} â€” {livePhase}
         </span>
       </div>
 
       {/* Backend offline banner */}
       {!connected && (
         <div className="border border-red-700 bg-red-950 text-red-400 p-3 text-xs">
-          BACKEND OFFLINE — Run: <code className="text-red-300">python -m uvicorn app.main:app --port 4000</code> in the <code>simulator/backend</code> folder
+          BACKEND DISCONNECTED — Attempting to reconnect...
         </div>
       )}
 
@@ -151,13 +151,13 @@ export default function MissionPage() {
             <Val l="MAP"            v={p.map_kpa ?? p.map ?? 0} u="kPa"  />
             <Val l="Fuel Flow"      v={p.fuel_flow_lph ?? p.fuelFlow ?? 0} u="L/hr" warn={(p.fuel_flow_lph??0)>35} />
             <Val l="Fuel Remaining" v={p.fuel_remaining_l ?? p.fuelRemaining ?? 0} u="L" crit={(p.fuel_remaining_l??100)<10} />
-            <Val l="EGT"            v={p.egt_c ?? p.egt ?? 0} u="°C"   warn={(p.egt_c??0)>800} crit={(p.egt_c??0)>900} />
+            <Val l="EGT"            v={p.egt_c ?? p.egt ?? 0} u="Â°C"   warn={(p.egt_c??0)>800} crit={(p.egt_c??0)>900} />
           </div>
           <div>
             <Val l="Altitude"       v={p.altitude_m ?? p.altitude ?? 0} u="m"    />
             <Val l="Airspeed"       v={p.airspeed_kmh ?? p.airspeed ?? 0} u="km/h" />
             <Val l="Vert. Speed"    v={p.vertical_speed_ms ?? p.verticalSpeed ?? 0} u="m/s"  />
-            <Val l="CHT"            v={p.cht_c ?? p.cht ?? 0} u="°C"   warn={(p.cht_c??0)>200} crit={(p.cht_c??0)>230} />
+            <Val l="CHT"            v={p.cht_c ?? p.cht ?? 0} u="Â°C"   warn={(p.cht_c??0)>200} crit={(p.cht_c??0)>230} />
             <Val l="Oil Pressure"   v={p.oil_pressure_kpa ?? p.oilPressure ?? 0} u="kPa"  crit={(p.oil_pressure_kpa??500)<150} />
             <Val l="Health Score"   v={p.health_score ?? p.health ?? 100} u="%" warn={(p.health_score??100)<70} crit={(p.health_score??100)<40} />
           </div>
@@ -175,3 +175,4 @@ export default function MissionPage() {
     </div>
   );
 }
+
