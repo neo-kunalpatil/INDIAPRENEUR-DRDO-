@@ -1,4 +1,5 @@
 import os
+import time
 import urllib.parse
 import psycopg2
 from psycopg2 import pool
@@ -37,32 +38,48 @@ print(f"[Timescale Cloud Integration] Loaded backend environment strictly from: 
 print(f"[Timescale Cloud Integration] Connecting strictly to TIMESCALE_DATABASE_URL: {SAFE_DB_URL}")
 
 _connection_pool = None
+_last_failed_connect_time = 0
 
 def get_connection_pool():
-    global _connection_pool
+    global _connection_pool, _last_failed_connect_time
+    # Circuit breaker: Don't retry failed connection pool init more than once every 60s
     if _connection_pool is None:
+        now = time.time()
+        if now - _last_failed_connect_time < 60:
+            return None
         try:
-            _connection_pool = psycopg2.pool.SimpleConnectionPool(1, 20, TIMESCALE_DATABASE_URL)
+            url = TIMESCALE_DATABASE_URL
+            if "connect_timeout" not in url:
+                sep = "&" if "?" in url else "?"
+                url = f"{url}{sep}connect_timeout=3"
+            _connection_pool = psycopg2.pool.SimpleConnectionPool(1, 10, url)
         except Exception as e:
-            print(f"[Timescale Connection Error] Failed to initialize connection pool: {e}")
+            print(f"[Timescale Connection Warning] Remote Cloud DB unreachable (offline mode active): {e}")
+            _last_failed_connect_time = now
             _connection_pool = None
     return _connection_pool
 
 def get_db_connection():
+    global _last_failed_connect_time
+    now = time.time()
+    if now - _last_failed_connect_time < 60:
+        return None
+
     try:
         pool_inst = get_connection_pool()
         if pool_inst:
             conn = pool_inst.getconn()
             if conn and conn.closed != 0:
-                # Connection was closed or dropped by remote host, discard and reconnect
                 try:
                     pool_inst.putconn(conn, close=True)
                 except Exception:
                     pass
-                conn = psycopg2.connect(TIMESCALE_DATABASE_URL)
-            return conn
-        return psycopg2.connect(TIMESCALE_DATABASE_URL)
+                conn = None
+            if conn:
+                return conn
+        return None
     except Exception as e:
+        _last_failed_connect_time = time.time()
         print(f"[Timescale DB Connection Failure] {e}")
         return None
 

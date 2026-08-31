@@ -54,6 +54,11 @@ app.include_router(health_router)
 app.include_router(alerts_router)
 app.include_router(garuda_router)
 
+@app.get("/api/system/garuda-health")
+async def system_garuda_health():
+    from app.api.garuda import garuda_health_endpoint
+    return await garuda_health_endpoint()
+
 @app.get("/api/system/startup-state")
 async def get_system_startup_state():
     """Single unified restoration endpoint for GCS initialization without zero-flashes"""
