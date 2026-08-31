@@ -4,6 +4,7 @@ class Settings:
     def __init__(self):
         # Allow deployment environments to override URLs via ENV variables
         self.DATABASE_URL: str = os.getenv("DATABASE_URL")
+        self.TIMESCALE_DATABASE_URL: str = os.getenv("TIMESCALE_DATABASE_URL")
         self.REDIS_URL: str = os.getenv("REDIS_URL")
         
         # Microservice Endpoints - Strict Environment Variable Enforcement

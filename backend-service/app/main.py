@@ -23,6 +23,22 @@ logger = logging.getLogger("MainBackendService")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting Main Backend Service Gateway...")
+    
+    ts_url = getattr(settings, "TIMESCALE_DATABASE_URL", None)
+    if ts_url:
+        try:
+            # Mask format: postgres://user:*****@host:port/db
+            parts = ts_url.split(":", 2)
+            if len(parts) == 3 and "@" in parts[2]:
+                creds, rest = parts[2].split("@", 1)
+                masked = f"{parts[0]}:{parts[1]}:*****@{rest}"
+            else:
+                masked = "*****"
+        except:
+            masked = "*****"
+        logger.info(f"Loaded TIMESCALE_DATABASE_URL: {masked}")
+    else:
+        logger.warning("TIMESCALE_DATABASE_URL is not set!")
     ws_task = asyncio.create_task(simulator_ws_client.start())
     yield
     logger.info("Shutting down Main Backend Service Gateway...")
