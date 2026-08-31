@@ -76,6 +76,7 @@ interface GcsContextType {
   resetTelemetryToNormal: () => void;
   customRulOffsetHours: number;
   setCustomRulOffsetHours: (hrs: number) => void;
+  livePosition: { lat: number; lng: number; region: string };
 }
 
 const GcsContext = createContext<GcsContextType | undefined>(undefined);
@@ -89,7 +90,9 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSimulationRunning, setIsSimulationRunning] = useState<boolean>(true);
   const [activeFaults, setActiveFaults] = useState<InjectedFault[]>([]);
   const [alerts, setAlerts] = useState<AlertNotification[]>([]);
-  const [mission] = useState<MissionProfile>(MOCK_ACTIVE_MISSION);
+  const [mission, setMission] = useState<MissionProfile>(MOCK_ACTIVE_MISSION);
+  const [missionElapsedSec, setMissionElapsedSec] = useState<number>(MOCK_ACTIVE_MISSION.elapsedTimeHours * 3600);
+  const [livePosition, setLivePosition] = useState<{ lat: number; lng: number; region: string }>(MOCK_UAV_FLEET[0].location);
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
   const [currentTourStep, setCurrentTourStep] = useState<number>(0);
   const [customRulOffsetHours, setCustomRulOffsetHours] = useState<number>(0);
@@ -172,6 +175,33 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ws.onmessage = (event) => {
           try {
             const rawData = JSON.parse(event.data);
+            
+            if (rawData.type === 'MAVLINK') {
+              const mav = rawData.data;
+              if (mav.lat !== undefined && mav.lng !== undefined) {
+                 setLivePosition(prev => ({ ...prev, lat: mav.lat, lng: mav.lng }));
+              }
+              setUavFleet(prev => prev.map(u => {
+                if (u.id !== selectedUavId) return u;
+                return {
+                  ...u,
+                  altitudeFt: mav.altitude_ft !== undefined ? Math.round(mav.altitude_ft) : u.altitudeFt,
+                  airspeedKts: mav.airspeed_kts !== undefined ? Math.round(mav.airspeed_kts) : u.airspeedKts,
+                  fuelRemainingKg: mav.battery_pct !== undefined && mav.battery_pct >= 0 ? Math.round((mav.battery_pct / 100) * 184.5) : u.fuelRemainingKg
+                };
+              }));
+              if (mav.current_wp_index !== undefined) {
+                 setMission(prev => ({
+                   ...prev,
+                   waypoints: prev.waypoints.map((wp, i) => ({
+                     ...wp,
+                     status: i < mav.current_wp_index ? 'PASSED' : i === mav.current_wp_index ? 'CURRENT' : 'PENDING'
+                   }))
+                 }));
+              }
+              return; // End parsing for MAVLink specifically
+            }
+
             const data = rawData.payload || rawData.data || rawData;
 
             if (data) {
@@ -247,6 +277,10 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
   }, [selectedUavId]);
+
+  // ─── SIMULATION ENGINE ────────────────────────────────────────────────────
+  // DELETED: Replaced by Real Hardware-in-the-Loop MAVLink Bridge
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Initial REST fetch from Main Backend Gateway (Port 8000)
   useEffect(() => {
@@ -536,6 +570,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         resetTelemetryToNormal,
         customRulOffsetHours,
         setCustomRulOffsetHours,
+        livePosition,
       }}
     >
       {children}

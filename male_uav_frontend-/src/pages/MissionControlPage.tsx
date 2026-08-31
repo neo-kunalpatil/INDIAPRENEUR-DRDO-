@@ -1,27 +1,138 @@
-import React from 'react';
-import { 
-  Compass, 
-  MapPin, 
-  ShieldCheck, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Navigation, 
-  TrendingUp, 
-  Clock, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  ShieldCheck,
+  AlertTriangle,
+  Navigation,
+  TrendingUp,
+  Clock,
   Fuel,
-  Sliders,
-  Wind
+  Wind,
+  Thermometer,
+  Eye,
+  Radio,
 } from 'lucide-react';
 import { useGcs } from '../contexts/GcsContext';
 import { MetricCard } from '../components/common/MetricCard';
+import { LiveMissionMap } from '../components/mission/LiveMissionMap';
+import { TerrainProfileChart } from '../components/mission/TerrainProfileChart';
+import { executeGarudaCommand } from '../services/garudaAiService';
+import { computeLinkMargin, classifyLinkQuality, haversineKm } from '../services/linkMarginService';
+import { fetchWeather, weatherRiskBonus, weatherCodeLabel, WeatherData, WEATHER_DEFAULTS } from '../services/weatherService';
+import { fetchElevations, WaypointElevation, minClearance, threatCount } from '../services/elevationService';
+
+// GCS base location (Aeronautical Test Range, Chitradurga)
+const GCS_LAT = 14.2384;
+const GCS_LNG = 76.3982;
 
 export const MissionControlPage: React.FC = () => {
-  const { selectedUav, mission, telemetry } = useGcs();
+  const { selectedUav, mission, telemetry, activeFaults, livePosition } = useGcs();
 
-  const isGo = selectedUav.missionRiskScore < 30;
+  const [aiRecommendation, setAiRecommendation] = useState<string>('GARUDA-AI is analyzing real-time mission telemetry...');
+  const [weather, setWeather] = useState<WeatherData>(WEATHER_DEFAULTS);
+  const [elevations, setElevations] = useState<WaypointElevation[]>([]);
+  const [elevFetched, setElevFetched] = useState(false);
+
+  // ── LINK MARGIN (physics model) ─────────────────────────────────
+  const groundRangeKm = haversineKm(livePosition.lat, livePosition.lng, GCS_LAT, GCS_LNG);
+  const linkMarginDb = computeLinkMargin(selectedUav.altitudeFt, groundRangeKm);
+  const linkQuality = classifyLinkQuality(linkMarginDb);
+
+  // ── FUEL PHYSICS ────────────────────────────────────────────────
+  const fuelBurnRateKgH = Math.max(0.1, (telemetry.fuelFlowLitersHr || 20) * 0.72);
+  const dynamicEnduranceHours = selectedUav.fuelRemainingKg / fuelBurnRateKgH;
+  const loiterTimeRemaining = Math.max(0, dynamicEnduranceHours - 1.0);
+
+  // ── MISSION RANGE / ETA ─────────────────────────────────────────
+  const lastWp = mission.waypoints[mission.waypoints.length - 1];
+  const distRemainingKm = haversineKm(livePosition.lat, livePosition.lng, lastWp.lat, lastWp.lng);
+  const etaHours = selectedUav.airspeedKts > 0
+    ? (distRemainingKm / 1.852) / selectedUav.airspeedKts
+    : 0;
+  const fuelRequiredKg = etaHours * fuelBurnRateKgH;
+
+  // ── TERRAIN ─────────────────────────────────────────────────────
+  const minTerrainClearance = minClearance(elevations);
+  const terrainThreats = threatCount(elevations);
+
+  // ── MISSION RISK (telemetry + weather + terrain) ────────────────
+  const maxCht = Math.max(...telemetry.chtC);
+  let dynamicRisk = selectedUav.missionRiskScore;
+  if (telemetry.vibrationRmsMmS > 2.0) dynamicRisk += (telemetry.vibrationRmsMmS - 2.0) * 10;
+  if (maxCht > 180) dynamicRisk += (maxCht - 180) * 2;
+  if (selectedUav.engineHealthIndex < 80) dynamicRisk += (80 - selectedUav.engineHealthIndex);
+  dynamicRisk += weatherRiskBonus(weather.windSpeedKts, weather.visibilityKm);
+  if (terrainThreats > 0) dynamicRisk += terrainThreats * 5;
+  dynamicRisk = Math.min(100, Math.max(0, dynamicRisk));
+
+  // ── GO/NO-GO ────────────────────────────────────────────────────
+  const isGo = dynamicRisk < 40;
+
+  // ── WEATHER FETCH (every 5 min) ─────────────────────────────────
+  const fetchWx = useCallback(async () => {
+    try {
+      const wx = await fetchWeather(livePosition.lat, livePosition.lng);
+      setWeather(wx);
+    } catch {
+      // keep previous values on error
+    }
+  }, [livePosition.lat, livePosition.lng]);
+
+  useEffect(() => {
+    fetchWx();
+    const id = setInterval(fetchWx, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [fetchWx]);
+
+  // ── ELEVATION FETCH (once per mission, refetch if waypoints change) ──
+  useEffect(() => {
+    if (elevFetched) return;
+    const wps = mission.waypoints.map(wp => ({
+      name: wp.name,
+      lat: wp.lat,
+      lng: wp.lng,
+      altFt: wp.altFt,
+    }));
+    fetchElevations(wps)
+      .then(result => { setElevations(result); setElevFetched(true); })
+      .catch(() => {}); // silent — terrain profile stays empty
+  }, [mission.waypoints, elevFetched]);
+
+  // ── GARUDA-AI RECOMMENDATIONS ────────────────────────────────────
+  useEffect(() => {
+    const fetchAiOpt = async () => {
+      const payload = {
+        telemetry,
+        activeFaults,
+        mission,
+        weather: {
+          windSpeedKts: weather.windSpeedKts,
+          windDirectionDeg: weather.windDirectionDeg,
+          tempC: weather.tempC,
+          condition: weatherCodeLabel(weather.weatherCode),
+        },
+        linkMargin: `${linkMarginDb} dB (${linkQuality.label})`,
+        terrainClearance: `Min ${minTerrainClearance === Infinity ? 'N/A' : minTerrainClearance + ' ft'} — ${terrainThreats} threat waypoints`,
+        distanceRemainingKm: distRemainingKm.toFixed(1),
+        etaHours: etaHours.toFixed(2),
+        fuelRequiredKg: fuelRequiredKg.toFixed(1),
+      };
+      const response = await executeGarudaCommand(
+        'Generate exactly two mission optimization recommendations based on the provided live telemetry, weather, terrain clearance, link margin, and fuel state.',
+        payload
+      );
+      if (response && !response.includes('SYSTEM ERROR')) {
+        setAiRecommendation(response);
+      }
+    };
+
+    fetchAiOpt();
+    const id = setInterval(fetchAiOpt, 60000);
+    return () => clearInterval(id);
+  }, [telemetry.vibrationRmsMmS, maxCht, weather.windSpeedKts]);
 
   return (
     <div className="p-4 space-y-4 max-w-[1920px] mx-auto">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-4">
         <div>
@@ -34,18 +145,51 @@ export const MissionControlPage: React.FC = () => {
             </span>
           </div>
           <p className="text-xs font-mono-code text-slate-400 mt-0.5">
-            Mission: {mission.codeName} • Altitude: FL{Math.round(mission.altitudeFlightLevelFt / 100)} • Sector: {mission.terrainType}
+            Mission: {mission.codeName} • FL{Math.round(selectedUav.altitudeFt / 100)} ({selectedUav.altitudeFt.toLocaleString()} FT) • {livePosition.region}
           </p>
         </div>
 
-        {/* Big Go / No-Go Decision Badge */}
+        {/* Go/No-Go Badge */}
         <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border font-mono-code font-bold text-sm ${
-          isGo 
-            ? 'bg-emerald-950/80 border-emerald-600 text-emerald-300 shadow-lg shadow-emerald-950/50' 
+          isGo
+            ? 'bg-emerald-950/80 border-emerald-600 text-emerald-300 shadow-lg shadow-emerald-950/50'
             : 'bg-red-950/80 border-red-600 text-red-300 shadow-lg shadow-red-950/50 animate-pulse'
         }`}>
           {isGo ? <ShieldCheck className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-          <span>DECISION: {isGo ? 'MISSION GO (94.2% RELIABILITY)' : 'ABORT / EXECUTE RTB'}</span>
+          <span>DECISION: {isGo ? `MISSION GO (${(100 - dynamicRisk).toFixed(1)}% RELIABILITY)` : 'ABORT / EXECUTE RTB'}</span>
+        </div>
+      </div>
+
+      {/* Weather Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2">
+        <div className="flex items-center gap-1.5 text-xs font-mono-code">
+          <Wind className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="text-slate-400">WIND</span>
+          <span className="text-cyan-300 font-bold">{weather.isLoading ? '--' : `${weather.windSpeedKts} KTS ${weather.windDirectionDeg}°`}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-mono-code">
+          <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-slate-400">OAT</span>
+          <span className="text-amber-300 font-bold">{weather.isLoading ? '--' : `${weather.tempC}°C`}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-mono-code">
+          <Eye className="w-3.5 h-3.5 text-indigo-400" />
+          <span className="text-slate-400">VIS</span>
+          <span className="text-indigo-300 font-bold">{weather.isLoading ? '--' : `${weather.visibilityKm} KM`}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-mono-code">
+          <Navigation className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-400">QNH</span>
+          <span className="text-slate-200 font-bold">{weather.isLoading ? '--' : `${weather.pressureHpa} hPa`}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-mono-code">
+          <Radio className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-slate-400">CONDITION</span>
+          <span className="text-emerald-300 font-bold">{weather.isLoading ? '--' : weatherCodeLabel(weather.weatherCode)}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-mono-code">
+          <span className="text-slate-400">DIST REM</span>
+          <span className="text-slate-200 font-bold">{distRemainingKm.toFixed(1)} KM</span>
         </div>
       </div>
 
@@ -53,137 +197,96 @@ export const MissionControlPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <MetricCard
           title="Mission Risk Index"
-          value={`${selectedUav.missionRiskScore.toFixed(1)}%`}
+          value={`${dynamicRisk.toFixed(1)}%`}
           status={isGo ? 'NORMAL' : 'CRITICAL'}
-          change={isGo ? 'Within 30% Safety Ceiling' : 'Risk Exceeds Safety Margin'}
+          change={isGo ? 'Within 40% Safety Ceiling' : 'Risk Exceeds Safety Margin'}
           changeType={isGo ? 'positive' : 'negative'}
           icon={ShieldCheck}
-          subtext="Terrain + Met + Powerplant"
+          subtext="Terrain + Met + Powerplant + Weather"
         />
         <MetricCard
           title="Remaining Fuel Endurance"
-          value={`${(selectedUav.fuelRemainingKg / 14.5).toFixed(1)}h`}
-          status="HIGHLIGHT"
-          change={`${selectedUav.fuelRemainingKg} kg onboard`}
-          changeType="positive"
+          value={`${dynamicEnduranceHours.toFixed(1)}h`}
+          status={dynamicEnduranceHours > 2 ? 'HIGHLIGHT' : 'CRITICAL'}
+          change={`${selectedUav.fuelRemainingKg.toFixed(1)} kg / Need ${fuelRequiredKg.toFixed(1)} kg`}
+          changeType={selectedUav.fuelRemainingKg > fuelRequiredKg ? 'positive' : 'negative'}
           icon={Fuel}
-          subtext="Specific fuel consumption nominal"
+          subtext={`Burn rate: ${fuelBurnRateKgH.toFixed(1)} kg/h`}
         />
         <MetricCard
           title="Loiter Time on Station"
-          value={`${mission.elapsedTimeHours}h`}
-          status="NORMAL"
-          change="3.5h planned remaining"
-          changeType="neutral"
+          value={`${loiterTimeRemaining.toFixed(1)}h`}
+          status={loiterTimeRemaining > 0 ? 'NORMAL' : 'CRITICAL'}
+          change={`ETA to RTB: ${etaHours.toFixed(2)}h — ${distRemainingKm.toFixed(0)} km`}
+          changeType={loiterTimeRemaining > 0 ? 'neutral' : 'negative'}
           icon={Clock}
-          subtext="Altitude: FL220 (22,000 FT)"
+          subtext={`FL${Math.round(selectedUav.altitudeFt / 100)} — ${selectedUav.altitudeFt.toLocaleString()} FT`}
         />
         <MetricCard
           title="Telemetry Link Margin"
-          value="48.2 dB"
-          status="NORMAL"
-          change="Ku-band SATCOM + C-Band LOS"
-          changeType="positive"
+          value={`${linkMarginDb} dB`}
+          status={linkQuality.status}
+          change={`${linkQuality.label} — Range ${groundRangeKm.toFixed(0)} km slant`}
+          changeType={linkQuality.status === 'NORMAL' ? 'positive' : linkQuality.status === 'WARNING' ? 'neutral' : 'negative'}
           icon={Navigation}
-          subtext="Encryption: DRDO Type-1"
+          subtext="Ku-band SATCOM — Friis Path Model"
         />
       </div>
 
-      {/* Waypoint Trajectory & Tactical Map Display */}
+      {/* Map + Advisor */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left 8 Cols: Waypoint Flight Path Visualizer */}
-        <div className="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+
+        {/* Left 8 cols: Live Mission Map */}
+        <div className="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2">
-              <Compass className="w-4 h-4 text-cyan-400" />
+              <Navigation className="w-4 h-4 text-cyan-400" />
               <h3 className="font-heading font-bold text-sm text-slate-100">
-                Tactical Waypoint Trajectory & Terrain Profile
+                Live Mission Map — Satellite / Terrain / Tactical
               </h3>
             </div>
-            <span className="text-[10px] font-mono-code text-slate-400">COORDINATES: WGS-84</span>
+            <div className="flex items-center gap-3 text-[10px] font-mono-code text-slate-400">
+              <span>WGS-84</span>
+              {terrainThreats > 0 && (
+                <span className="text-red-400 font-bold animate-pulse">⚠ {terrainThreats} TERRAIN THREAT{terrainThreats > 1 ? 'S' : ''}</span>
+              )}
+            </div>
           </div>
 
-          {/* SVG Tactical Navigation Map Schematic */}
-          <div className="relative flex-1 bg-slate-950/90 rounded-xl p-4 border border-slate-800/80 min-h-[320px] flex items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 tactical-grid opacity-30 pointer-events-none" />
-            
-            {/* SVG Flight Path */}
-            <svg viewBox="0 0 700 300" className="w-full h-full">
-              {/* Waypoint Line */}
-              <polyline
-                points="80,240 220,180 380,120 540,150 640,110"
-                fill="none"
-                stroke="#06b6d4"
-                strokeWidth="2.5"
-                strokeDasharray="6 4"
-              />
-              
-              {/* Completed segment */}
-              <polyline
-                points="80,240 220,180 380,120"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="3"
-              />
-
-              {/* Waypoints */}
-              {mission.waypoints.map((wp, i) => {
-                const positions = [
-                  { x: 80, y: 240 },
-                  { x: 220, y: 180 },
-                  { x: 380, y: 120 },
-                  { x: 540, y: 150 },
-                  { x: 640, y: 110 },
-                ];
-                const pos = positions[i] || { x: 100, y: 100 };
-                const isCurrent = wp.status === 'CURRENT';
-                const isPassed = wp.status === 'PASSED';
-
-                return (
-                  <g key={wp.name} className="cursor-pointer">
-                    <circle
-                      cx={pos.x}
-                      cy={pos.y}
-                      r={isCurrent ? 12 : 7}
-                      fill={isPassed ? '#10b981' : isCurrent ? '#06b6d4' : '#334155'}
-                      stroke="#fff"
-                      strokeWidth="1.5"
-                    />
-                    {isCurrent && (
-                      <circle
-                        cx={pos.x}
-                        cy={pos.y}
-                        r="20"
-                        fill="none"
-                        stroke="#06b6d4"
-                        strokeWidth="1"
-                        className="animate-ping"
-                      />
-                    )}
-                    <text
-                      x={pos.x}
-                      y={pos.y - 14}
-                      textAnchor="middle"
-                      fill="#e2e8f0"
-                      fontSize="10"
-                      fontFamily="monospace"
-                      fontWeight="bold"
-                    >
-                      {wp.name} ({wp.altFt} FT)
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
+          {/* Map */}
+          <div className="flex-1 min-h-[360px]">
+            <LiveMissionMap
+              livePosition={livePosition}
+              waypoints={mission.waypoints as any}
+              elevations={elevations}
+              airspeedKts={selectedUav.airspeedKts}
+            />
           </div>
 
-          <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-xs font-mono-code text-slate-400">
-            <span>CURRENT POSITION: <strong>26°55&apos;N, 70°54&apos;E (WP-04 LOITER)</strong></span>
-            <span>AIRSPEED: <strong className="text-slate-200">{selectedUav.airspeedKts} KTS</strong></span>
+          {/* Terrain Profile Chart */}
+          <div className="border-t border-slate-800/60 pt-2">
+            <TerrainProfileChart
+              elevations={elevations}
+              uavAltitudeFt={selectedUav.altitudeFt}
+            />
+          </div>
+
+          {/* Bottom status bar */}
+          <div className="pt-1 border-t border-slate-800 flex items-center justify-between text-xs font-mono-code text-slate-400">
+            <span>
+              POSITION: <strong className="text-slate-200">{livePosition.lat.toFixed(4)}°N, {livePosition.lng.toFixed(4)}°E</strong>
+              {' '}— {livePosition.region}
+            </span>
+            <span>
+              AIRSPEED: <strong className="text-slate-200">{selectedUav.airspeedKts} KTS</strong>
+              {' '}| MIN CLEARANCE: <strong className={minTerrainClearance < 500 ? 'text-red-400' : 'text-emerald-400'}>
+                {minTerrainClearance === Infinity ? 'N/A' : `${minTerrainClearance.toLocaleString()} FT`}
+              </strong>
+            </span>
           </div>
         </div>
 
-        {/* Right 4 Cols: Mission Optimization Advisor (Innovation #23) */}
+        {/* Right 4 cols: Mission Optimization Advisor */}
         <div className="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
@@ -194,41 +297,35 @@ export const MissionControlPage: React.FC = () => {
                 </h3>
               </div>
               <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-mono-code font-bold">
-                INNOVATION #23
+                GARUDA-AI POWERED
               </span>
             </div>
 
             <p className="text-xs text-slate-300 mb-3 leading-relaxed">
-              Real-time Pareto trade-off optimization between UAV loiter duration, fuel consumption, and aero engine thermal stress:
+              Real-time Pareto trade-off optimization using live telemetry, weather data, terrain clearance, and link margin:
             </p>
 
             <div className="space-y-2.5 text-xs font-mono-code">
-              <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                <div className="flex items-center justify-between font-bold text-emerald-400 mb-1">
-                  <span>RECOMMENDATION #1</span>
-                  <span>+45 MIN EXTENSION</span>
-                </div>
-                <p className="text-slate-300 text-[11px]">
-                  Descend from FL240 to FL200: Reduces turbocharger compression ratio by 0.12 bar and lowers CHT by 7.4°C.
-                </p>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 whitespace-pre-wrap max-h-52 overflow-y-auto">
+                {aiRecommendation}
               </div>
+            </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                <div className="flex items-center justify-between font-bold text-cyan-300 mb-1">
-                  <span>RECOMMENDATION #2</span>
-                  <span>-3.2 L/H FUEL SAVING</span>
-                </div>
-                <p className="text-slate-300 text-[11px]">
-                  Trim engine speed from 5,200 RPM to 4,850 RPM during orbital loiter without compromising ground-mapping radar swath.
-                </p>
-              </div>
+            {/* Live data summary fed to AI */}
+            <div className="mt-3 grid grid-cols-2 gap-1.5 text-[10px] font-mono-code text-slate-500">
+              <span>WIND: <span className="text-slate-300">{weather.windSpeedKts} kts</span></span>
+              <span>TEMP: <span className="text-slate-300">{weather.tempC}°C</span></span>
+              <span>LINK: <span className="text-slate-300">{linkMarginDb} dB</span></span>
+              <span>TERRAIN: <span className={terrainThreats > 0 ? 'text-red-400' : 'text-emerald-400'}>{terrainThreats > 0 ? `${terrainThreats} THREATS` : 'CLEAR'}</span></span>
+              <span>RANGE: <span className="text-slate-300">{distRemainingKm.toFixed(0)} km</span></span>
+              <span>FUEL NEED: <span className="text-slate-300">{fuelRequiredKg.toFixed(0)} kg</span></span>
             </div>
           </div>
 
           <div className="mt-4 p-3 rounded-xl bg-indigo-950/40 border border-indigo-800/60 text-xs">
             <span className="font-bold text-indigo-300 block mb-1">AUTOMATED FLIGHT ENVELOPE PROTECTION:</span>
             <p className="text-slate-300 text-[11px]">
-              GCS autopilot automatically inhibits full throttle climbs if Cylinder #3 CHT reaches 130°C.
+              GCS autopilot tracks peak CHT ({maxCht.toFixed(1)}°C). Throttle authority reduced if CHT exceeds 130°C or link margin falls below 3 dB.
             </p>
           </div>
         </div>

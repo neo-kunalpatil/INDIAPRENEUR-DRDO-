@@ -130,3 +130,11 @@ Generate enterprise military-grade analysis following the strict operational for
   
   onChunk(`\\n${formattedError}`);
 };
+export const executeGarudaCommand = async (command: string, contextData: any): Promise<string> => {
+  return new Promise((resolve) => {
+    let fullText = '';
+    streamGarudaCommand(command, contextData, (chunk) => {
+      fullText += chunk;
+    }).then(() => resolve(fullText)).catch(() => resolve(fullText));
+  });
+};

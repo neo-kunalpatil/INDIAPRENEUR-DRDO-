@@ -9,7 +9,7 @@ client = Groq(api_key=api_key) if api_key else None
 SYSTEM_PROMPT = """
 You are GARUDA-AI.
 
-Enterprise Mission Intelligence Assistant.
+Mission Intelligence Engine.
 
 Integrated with:
 DRDO-ADE MALE UAV Digital Twin Platform.

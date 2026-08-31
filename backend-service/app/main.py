@@ -69,6 +69,29 @@ async def websocket_dashboard_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         dashboard_ws_manager.disconnect(websocket)
 
+@app.websocket("/ws/telemetry_ingest")
+async def websocket_mavlink_ingest(websocket: WebSocket):
+    await websocket.accept()
+    logger.info("MAVLink Bridge connected for telemetry ingest.")
+    from app.repositories import TelemetryRepository
+    import json
+    repo = TelemetryRepository()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Save to TimescaleDB
+            try:
+                parsed = json.loads(data)
+                if parsed.get("type") == "MAVLINK":
+                    repo.save_mavlink_telemetry(parsed.get("data", {}))
+            except Exception as e:
+                logger.error(f"Error saving MAVLink to DB: {e}")
+                
+            # Broadcast the MAVLink data directly to all connected dashboard clients
+            await dashboard_ws_manager.broadcast(data)
+    except WebSocketDisconnect:
+        logger.info("MAVLink Bridge disconnected.")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True)

@@ -1,0 +1,4 @@
+pymavlink
+websockets
+httpx
+asyncio

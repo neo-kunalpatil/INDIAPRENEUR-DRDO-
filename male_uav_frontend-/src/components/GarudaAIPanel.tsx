@@ -63,7 +63,7 @@ export const GarudaAIPanel: React.FC = () => {
   return (
     <div className="bg-[#0b1120] border border-[#1e293b] rounded-lg p-4 flex flex-col h-full text-slate-300 font-mono text-sm">
       <div className="border-b border-[#1e293b] pb-2 mb-4 flex items-center justify-between">
-        <h2 className="text-emerald-500 font-bold tracking-widest">GARUDA-AI // ENTERPRISE MISSION INTELLIGENCE</h2>
+        <h2 className="text-emerald-500 font-bold tracking-widest">GARUDA-AI // MISSION INTELLIGENCE</h2>
         <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-xs border border-emerald-500/30">ONLINE</span>
       </div>
 
