@@ -200,7 +200,7 @@ export const HybridVerificationPage: React.FC = () => {
                   </td>
                   <td className="py-3 px-3">
                     <span className={`font-bold ${row.divergencePercent > 10 ? 'text-red-400' : 'text-emerald-400'}`}>
-                      {row.divergencePercent.toFixed(1)}%
+                      {(Number(row.divergencePercent) || 0).toFixed(1)}%
                     </span>
                   </td>
                   <td className="py-3 px-3">

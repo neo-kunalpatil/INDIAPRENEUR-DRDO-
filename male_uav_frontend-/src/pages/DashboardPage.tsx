@@ -220,7 +220,7 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <MetricCard
           title="Adaptive Engine Health"
-          value={`${selectedUav.engineHealthIndex.toFixed(1)}%`}
+          value={`${(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}%`}
           status={selectedUav.engineHealthIndex > 80 ? 'NORMAL' : 'WARNING'}
           change={selectedUav.engineHealthIndex > 80 ? 'Nominal Envelope' : 'Thermal Disparity'}
           changeType={selectedUav.engineHealthIndex > 80 ? 'positive' : 'warning'}
@@ -242,7 +242,7 @@ export const DashboardPage: React.FC = () => {
         />
         <MetricCard
           title="Mission Risk (Go/No-Go)"
-          value={`${selectedUav.missionRiskScore.toFixed(1)}%`}
+          value={`${(Number(selectedUav.missionRiskScore) || 0).toFixed(1)}%`}
           status={selectedUav.missionRiskScore < 30 ? 'NORMAL' : 'CRITICAL'}
           change={selectedUav.missionRiskScore < 30 ? 'VERDICT: GO FLIGHT' : 'OBSERVE RECOVERY'}
           changeType={selectedUav.missionRiskScore < 30 ? 'positive' : 'negative'}
@@ -331,7 +331,7 @@ export const DashboardPage: React.FC = () => {
           <div className="mt-3 pt-2.5 border-t border-[#2A2D33] flex items-center justify-between text-xs">
             <span className="text-gray-400 font-mono-code text-[11px] uppercase">Knock Index:</span>
             <span className={`font-mono-code font-bold ${telemetry.knockIndex > 0.4 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
-              {telemetry.knockIndex.toFixed(2)} / 1.00 {telemetry.knockIndex > 0.4 ? '(DETONATION RISK)' : '(SAFE)'}
+              {(Number(telemetry.knockIndex) || 0).toFixed(2)} / 1.00 {telemetry.knockIndex > 0.4 ? '(DETONATION RISK)' : '(SAFE)'}
             </span>
           </div>
         </div>
@@ -423,7 +423,7 @@ export const DashboardPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="font-bold truncate text-white">{uav.callsign.split(' ')[0]}</span>
                   <span className={`font-bold ${uav.engineHealthIndex > 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {uav.engineHealthIndex.toFixed(0)}%
+                    {(Number(uav.engineHealthIndex) || 0).toFixed(0)}%
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-gray-400 mt-0.5">
@@ -496,7 +496,7 @@ export const DashboardPage: React.FC = () => {
             <div className="p-3 rounded bg-[#0A0B0D]/80 border border-[#2A2D33]">
               <span className="text-gray-500 text-[10px] font-mono-code block mb-1 uppercase">Turbo Efficiency</span>
               <div className="font-mono-code font-bold text-lg text-white">
-                {(telemetry.turbochargerRpm / 1000).toFixed(0)}k RPM
+                {(Number(telemetry.turbochargerRpm / 1000) || 0).toFixed(0)}k RPM
               </div>
               <p className="text-[10px] text-gray-400 mt-1">
                 Wastegate servo angle verified against thermodynamics.
@@ -664,10 +664,10 @@ export const DashboardPage: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                            <tr><td className="py-1.5 font-bold">Oil Pressure</td><td className="py-1.5 text-slate-400">4.35 bar</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</td><td className="py-1.5 text-slate-400">{(telemetry.oilPressureBar - 4.35).toFixed(2)} bar</td><td className="py-1.5 text-right font-bold text-emerald-400">LIVE SYNC</td></tr>
-                            <tr><td className="py-1.5 font-bold">Peak CHT Temp</td><td className="py-1.5 text-slate-400">115.0°C</td><td className="py-1.5 text-amber-300 font-telemetry">{Math.max(...telemetry.chtC).toFixed(1)}°C</td><td className="py-1.5 text-amber-300">+{(Math.max(...telemetry.chtC) - 115.0).toFixed(1)}°C</td><td className="py-1.5 text-right font-bold text-amber-400">ELEVATED</td></tr>
+                            <tr><td className="py-1.5 font-bold">Oil Pressure</td><td className="py-1.5 text-slate-400">4.35 bar</td><td className="py-1.5 text-cyan-300 font-telemetry">{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</td><td className="py-1.5 text-slate-400">{(Number(telemetry.oilPressureBar - 4.35) || 0).toFixed(2)} bar</td><td className="py-1.5 text-right font-bold text-emerald-400">LIVE SYNC</td></tr>
+                            <tr><td className="py-1.5 font-bold">Peak CHT Temp</td><td className="py-1.5 text-slate-400">115.0°C</td><td className="py-1.5 text-amber-300 font-telemetry">{Math.max(Number(...telemetry.chtC) || 0).toFixed(1)}°C</td><td className="py-1.5 text-amber-300">+{(Math.max(...telemetry.chtC) - 115.0).toFixed(1)}°C</td><td className="py-1.5 text-right font-bold text-amber-400">ELEVATED</td></tr>
                             <tr><td className="py-1.5 font-bold">Engine Speed</td><td className="py-1.5 text-slate-400">5100 RPM</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.rpm} RPM</td><td className="py-1.5 text-slate-400">{telemetry.rpm - 5100} RPM</td><td className="py-1.5 text-right font-bold text-emerald-400">NOMINAL</td></tr>
-                            <tr><td className="py-1.5 font-bold">Vibration RMS</td><td className="py-1.5 text-slate-400">2.00 mm/s</td><td className="py-1.5 text-indigo-300 font-telemetry">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</td><td className="py-1.5 text-indigo-300">+{(telemetry.vibrationRmsMmS - 2.0).toFixed(2)} mm/s</td><td className="py-1.5 text-right font-bold text-emerald-400">NORMAL</td></tr>
+                            <tr><td className="py-1.5 font-bold">Vibration RMS</td><td className="py-1.5 text-slate-400">2.00 mm/s</td><td className="py-1.5 text-indigo-300 font-telemetry">{(Number(telemetry.vibrationRmsMmS) || 0).toFixed(2)} mm/s</td><td className="py-1.5 text-indigo-300">+{(Number(telemetry.vibrationRmsMmS - 2.0) || 0).toFixed(2)} mm/s</td><td className="py-1.5 text-right font-bold text-emerald-400">NORMAL</td></tr>
                           </tbody>
                         </table>
                       </div>
@@ -714,7 +714,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800">
                       <span className="text-[10px] text-slate-400 block">ADAPTIVE HEALTH INDEX</span>
-                      <span className="text-2xl font-bold font-telemetry text-emerald-400">{selectedUav.engineHealthIndex.toFixed(1)}%</span>
+                      <span className="text-2xl font-bold font-telemetry text-emerald-400">{(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}%</span>
                       <span className="text-[10px] text-emerald-400 block mt-0.5">GRADE A (NOMINAL)</span>
                     </div>
                     <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800">
@@ -750,10 +750,10 @@ export const DashboardPage: React.FC = () => {
                     <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
                       <span className="font-bold text-cyan-300 block border-b border-slate-800 pb-1.5">EXPLAINABLE AI (XAI) DIAGNOSTIC</span>
                       <ul className="space-y-1 text-slate-300">
-                        <li>• Cylinder head temperatures balanced ({telemetry.chtC[0].toFixed(1)}°C - {telemetry.chtC[2].toFixed(1)}°C).</li>
-                        <li>• Oil pressure holding steady at {telemetry.oilPressureBar.toFixed(2)} bar.</li>
-                        <li>• Turbocharger boost output nominal at {telemetry.turboBoostBar.toFixed(2)} bar.</li>
-                        <li>• Vibration RMS amplitude optimal at {telemetry.vibrationRmsMmS.toFixed(2)} mm/s.</li>
+                        <li>• Cylinder head temperatures balanced ({(Number(telemetry.chtC[0]) || 0).toFixed(1)}°C - {(Number(telemetry.chtC[2]) || 0).toFixed(1)}°C).</li>
+                        <li>• Oil pressure holding steady at {(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar.</li>
+                        <li>• Turbocharger boost output nominal at {(Number(telemetry.turboBoostBar) || 0).toFixed(2)} bar.</li>
+                        <li>• Vibration RMS amplitude optimal at {(Number(telemetry.vibrationRmsMmS) || 0).toFixed(2)} mm/s.</li>
                       </ul>
                     </div>
 
@@ -762,7 +762,7 @@ export const DashboardPage: React.FC = () => {
                       <div className="space-y-1 text-slate-300 text-[11px] font-mono-code">
                         <div className="text-slate-400">Engine AHI 88.4%</div>
                         <div className="pl-3 text-slate-400 font-bold">└── Thermal Subsystem (96.2%)</div>
-                        <div className="pl-6 text-amber-300 font-bold">└── Cylinder #3 Thermal Stress ({telemetry.chtC[2].toFixed(1)}°C)</div>
+                        <div className="pl-6 text-amber-300 font-bold">└── Cylinder #3 Thermal Stress ({(Number(telemetry.chtC[2]) || 0).toFixed(1)}°C)</div>
                         <div className="pl-9 text-slate-300">└── Airflow boundary layer resistance on cowl intake #2</div>
                         <div className="pl-9 text-emerald-400">└── Recommendation: Inspect cowling seal after landing</div>
                       </div>
@@ -831,11 +831,11 @@ export const DashboardPage: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                          <tr><td className="py-1.5 font-bold">Cylinder Head Temp #1 (CHT)</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.chtC[0].toFixed(1)}°C</td><td className="py-1.5 text-slate-500">60 - 135°C</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ NORMAL</td></tr>
-                          <tr><td className="py-1.5 font-bold">Cylinder Head Temp #3 (CHT)</td><td className="py-1.5 text-amber-300 font-telemetry">{telemetry.chtC[2].toFixed(1)}°C</td><td className="py-1.5 text-slate-500">60 - 135°C</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ PEAK STRESS NODE</td></tr>
-                          <tr><td className="py-1.5 font-bold">Oil Line Pressure</td><td className="py-1.5 text-slate-100 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</td><td className="py-1.5 text-slate-500">3.0 - 5.0 bar</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ STABLE</td></tr>
+                          <tr><td className="py-1.5 font-bold">Cylinder Head Temp #1 (CHT)</td><td className="py-1.5 text-cyan-300 font-telemetry">{(Number(telemetry.chtC[0]) || 0).toFixed(1)}°C</td><td className="py-1.5 text-slate-500">60 - 135°C</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ NORMAL</td></tr>
+                          <tr><td className="py-1.5 font-bold">Cylinder Head Temp #3 (CHT)</td><td className="py-1.5 text-amber-300 font-telemetry">{(Number(telemetry.chtC[2]) || 0).toFixed(1)}°C</td><td className="py-1.5 text-slate-500">60 - 135°C</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ PEAK STRESS NODE</td></tr>
+                          <tr><td className="py-1.5 font-bold">Oil Line Pressure</td><td className="py-1.5 text-slate-100 font-telemetry">{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</td><td className="py-1.5 text-slate-500">3.0 - 5.0 bar</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ STABLE</td></tr>
                           <tr><td className="py-1.5 font-bold">Exhaust Gas Temp #2 (EGT)</td><td className="py-1.5 text-amber-300 font-telemetry">{Math.round(telemetry.egtC[1])}°C</td><td className="py-1.5 text-slate-500">650 - 850°C</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ NOMINAL</td></tr>
-                          <tr><td className="py-1.5 font-bold">Piezoelectric Vibration RMS</td><td className="py-1.5 text-indigo-300 font-telemetry">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</td><td className="py-1.5 text-slate-500">0.5 - 4.5 mm/s</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ CLASS I SAFE</td></tr>
+                          <tr><td className="py-1.5 font-bold">Piezoelectric Vibration RMS</td><td className="py-1.5 text-indigo-300 font-telemetry">{(Number(telemetry.vibrationRmsMmS) || 0).toFixed(2)} mm/s</td><td className="py-1.5 text-slate-500">0.5 - 4.5 mm/s</td><td className="py-1.5 text-right font-bold text-emerald-400">✓ CLASS I SAFE</td></tr>
                         </tbody>
                       </table>
                     </div>
@@ -920,7 +920,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800">
                       <span className="text-[10px] text-slate-400 block">MISSION RISK SCORE</span>
-                      <span className="text-2xl font-bold font-telemetry text-emerald-400">{selectedUav.missionRiskScore.toFixed(1)}%</span>
+                      <span className="text-2xl font-bold font-telemetry text-emerald-400">{(Number(selectedUav.missionRiskScore) || 0).toFixed(1)}%</span>
                       <span className="text-[10px] text-emerald-400 block font-bold">VERDICT: GO FLIGHT</span>
                     </div>
                     <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800">
@@ -1004,9 +1004,9 @@ export const DashboardPage: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                          <tr><td className="py-1.5 font-bold">Peak CHT Head Temp</td><td className="py-1.5 text-slate-100 font-telemetry">127.8°C</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.chtC[2].toFixed(1)}°C</td><td className="py-1.5 text-slate-400">0.6°C</td><td className="py-1.5 text-right font-bold text-emerald-400">PASSED (99.5%)</td></tr>
-                          <tr><td className="py-1.5 font-bold">Oil Line Pressure</td><td className="py-1.5 text-slate-100 font-telemetry">4.32 bar</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</td><td className="py-1.5 text-slate-400">0.03 bar</td><td className="py-1.5 text-right font-bold text-emerald-400">PASSED (99.3%)</td></tr>
-                          <tr><td className="py-1.5 font-bold">Vibration RMS Peak</td><td className="py-1.5 text-slate-100 font-telemetry">2.45 mm/s</td><td className="py-1.5 text-cyan-300 font-telemetry">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</td><td className="py-1.5 text-slate-400">0.08 mm/s</td><td className="py-1.5 text-right font-bold text-emerald-400">PASSED (98.8%)</td></tr>
+                          <tr><td className="py-1.5 font-bold">Peak CHT Head Temp</td><td className="py-1.5 text-slate-100 font-telemetry">127.8°C</td><td className="py-1.5 text-cyan-300 font-telemetry">{(Number(telemetry.chtC[2]) || 0).toFixed(1)}°C</td><td className="py-1.5 text-slate-400">0.6°C</td><td className="py-1.5 text-right font-bold text-emerald-400">PASSED (99.5%)</td></tr>
+                          <tr><td className="py-1.5 font-bold">Oil Line Pressure</td><td className="py-1.5 text-slate-100 font-telemetry">4.32 bar</td><td className="py-1.5 text-cyan-300 font-telemetry">{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</td><td className="py-1.5 text-slate-400">0.03 bar</td><td className="py-1.5 text-right font-bold text-emerald-400">PASSED (99.3%)</td></tr>
+                          <tr><td className="py-1.5 font-bold">Vibration RMS Peak</td><td className="py-1.5 text-slate-100 font-telemetry">2.45 mm/s</td><td className="py-1.5 text-cyan-300 font-telemetry">{(Number(telemetry.vibrationRmsMmS) || 0).toFixed(2)} mm/s</td><td className="py-1.5 text-slate-400">0.08 mm/s</td><td className="py-1.5 text-right font-bold text-emerald-400">PASSED (98.8%)</td></tr>
                         </tbody>
                       </table>
                     </div>
@@ -1027,17 +1027,17 @@ export const DashboardPage: React.FC = () => {
                       </div>
                       <div className="p-3 bg-slate-950 rounded border border-slate-800">
                         <span className="text-[10px] text-slate-400 block">MANIFOLD MAP</span>
-                        <span className="text-xl font-bold text-emerald-300 font-telemetry">{telemetry.manifoldPressureInHg.toFixed(1)} inHg</span>
+                        <span className="text-xl font-bold text-emerald-300 font-telemetry">{(Number(telemetry.manifoldPressureInHg) || 0).toFixed(1)} inHg</span>
                         <span className="text-[9px] text-emerald-400 block">NOMINAL</span>
                       </div>
                       <div className="p-3 bg-slate-950 rounded border border-slate-800">
                         <span className="text-[10px] text-slate-400 block">OIL PRESSURE</span>
-                        <span className="text-xl font-bold text-slate-100 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</span>
+                        <span className="text-xl font-bold text-slate-100 font-telemetry">{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</span>
                         <span className="text-[9px] text-emerald-400 block">NOMINAL</span>
                       </div>
                       <div className="p-3 bg-slate-950 rounded border border-slate-800">
                         <span className="text-[10px] text-slate-400 block">TURBO BOOST</span>
-                        <span className="text-xl font-bold text-amber-300 font-telemetry">{telemetry.turboBoostBar.toFixed(2)} bar</span>
+                        <span className="text-xl font-bold text-amber-300 font-telemetry">{(Number(telemetry.turboBoostBar) || 0).toFixed(2)} bar</span>
                         <span className="text-[9px] text-emerald-400 block">NOMINAL</span>
                       </div>
                     </div>
@@ -1054,7 +1054,7 @@ export const DashboardPage: React.FC = () => {
                       {[0, 1, 2, 3].map((idx) => (
                         <div key={idx} className="p-3 bg-slate-950 rounded border border-slate-800 space-y-1">
                           <span className="font-bold text-cyan-400">CYLINDER #{idx + 1}</span>
-                          <div className="flex justify-between"><span>CHT:</span><strong className="text-slate-100">{telemetry.chtC[idx].toFixed(1)}°C</strong></div>
+                          <div className="flex justify-between"><span>CHT:</span><strong className="text-slate-100">{(Number(telemetry.chtC[idx]) || 0).toFixed(1)}°C</strong></div>
                           <div className="flex justify-between"><span>EGT:</span><strong className="text-amber-300">{Math.round(telemetry.egtC[idx])}°C</strong></div>
                         </div>
                       ))}

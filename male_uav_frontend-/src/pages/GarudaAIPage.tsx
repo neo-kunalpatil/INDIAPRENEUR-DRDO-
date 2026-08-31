@@ -127,7 +127,7 @@ export const GarudaAIPage: React.FC = () => {
         response = `MISSION DATA:\nUAV: ${selectedUav.callsign}\nOPERATION: ${mission.codeName}\nPHASE: ${mission.phase}\nALTITUDE: FL${Math.round(mission.altitudeFlightLevelFt/100)}`;
         break;
       case '/show health':
-        response = `HEALTH INDEX: ${selectedUav.engineHealthIndex.toFixed(1)}%\nEST RUL: ${selectedUav.predictedRulHours} Hrs`;
+        response = `HEALTH INDEX: ${(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}%\nEST RUL: ${selectedUav.predictedRulHours} Hrs`;
         break;
       case '/show twin':
         response = `DIGITAL TWIN SYNC: ${selectedUav.twinConfidenceScore}%\nSTATE: LOCKED & TRACKING`;
@@ -238,19 +238,19 @@ export const GarudaAIPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center p-2 bg-slate-950 rounded border border-slate-800">
                 <span className="text-slate-500">PEAK CHT</span>
-                <span className="text-amber-400 font-bold text-lg">{Math.max(...telemetry.chtC).toFixed(1)}°C</span>
+                <span className="text-amber-400 font-bold text-lg">{Math.max(Number(...telemetry.chtC) || 0).toFixed(1)}°C</span>
               </div>
               <div className="flex justify-between items-center p-2 bg-slate-950 rounded border border-slate-800">
                 <span className="text-slate-500">PEAK EGT</span>
-                <span className="text-amber-400 font-bold text-lg">{Math.max(...telemetry.egtC).toFixed(1)}°C</span>
+                <span className="text-amber-400 font-bold text-lg">{Math.max(Number(...telemetry.egtC) || 0).toFixed(1)}°C</span>
               </div>
               <div className="flex justify-between items-center p-2 bg-slate-950 rounded border border-slate-800">
                 <span className="text-slate-500">VIBRATION</span>
-                <span className="text-indigo-400 font-bold text-lg">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</span>
+                <span className="text-indigo-400 font-bold text-lg">{(Number(telemetry.vibrationRmsMmS) || 0).toFixed(2)} mm/s</span>
               </div>
               <div className="flex justify-between items-center p-2 bg-slate-950 rounded border border-slate-800">
                 <span className="text-slate-500">HEALTH INDEX</span>
-                <span className="text-cyan-400 font-bold text-lg">{selectedUav.engineHealthIndex.toFixed(1)}%</span>
+                <span className="text-cyan-400 font-bold text-lg">{(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}%</span>
               </div>
               <div className="flex justify-between items-center p-2 bg-slate-950 rounded border border-slate-800">
                 <span className="text-slate-500">EST. RUL</span>

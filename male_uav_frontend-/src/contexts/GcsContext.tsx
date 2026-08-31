@@ -129,11 +129,11 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .then(data => {
         if (data) {
           if (data.telemetry) {
-            setTelemetry(prev => ({
+            setTelemetry(Number(prev => ({
               ...prev,
               rpm: data.telemetry.rpm || prev.rpm,
               oilTempC: data.telemetry.oil_temp_c || prev.oilTempC,
-              oilPressureBar: data.telemetry.oil_pressure_kpa ? Number((data.telemetry.oil_pressure_kpa / 100).toFixed(2)) : prev.oilPressureBar,
+              oilPressureBar: data.telemetry.oil_pressure_kpa ? Number((data.telemetry.oil_pressure_kpa / 100) || 0).toFixed(2)) : prev.oilPressureBar,
               chtC: Array.isArray(data.telemetry.cht_c) ? data.telemetry.cht_c : prev.chtC,
               egtC: Array.isArray(data.telemetry.egt_c) ? data.telemetry.egt_c : prev.egtC,
               turboBoostBar: data.telemetry.turbo_boost || prev.turboBoostBar,
@@ -226,20 +226,20 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 timestamp: data.timestamp ? new Date(data.timestamp).toISOString() : new Date().toISOString(),
                 rpm: data.rpm !== undefined ? Math.round(data.rpm) : prev.rpm,
                 throttlePercent: data.throttle_pct !== undefined ? data.throttle_pct : (data.throttle !== undefined ? data.throttle : prev.throttlePercent),
-                manifoldPressureInHg: data.map_kpa !== undefined ? Number((data.map_kpa * 0.2953).toFixed(1)) : (data.map !== undefined ? data.map : prev.manifoldPressureInHg),
+                manifoldPressureInHg: data.map_kpa !== undefined ? Number(Number((data.map_kpa * 0.2953) || 0).toFixed(1)) : (data.map !== undefined ? data.map : prev.manifoldPressureInHg),
                 coolantTempC: data.coolantTempC !== undefined ? data.coolantTempC : prev.coolantTempC,
-                oilTempC: data.oil_temp_c !== undefined ? Number(data.oil_temp_c.toFixed(1)) : (data.oilTemp !== undefined ? data.oilTemp : prev.oilTempC),
-                oilPressureBar: data.oil_pressure_kpa !== undefined ? Number((data.oil_pressure_kpa / 100).toFixed(2)) : (data.oilPressure !== undefined ? data.oilPressure : prev.oilPressureBar),
-                fuelPressureBar: data.fuel_pressure_kpa !== undefined ? Number((data.fuel_pressure_kpa / 100).toFixed(2)) : prev.fuelPressureBar,
-                fuelFlowLitersHr: data.fuel_flow_lph !== undefined ? Number(data.fuel_flow_lph.toFixed(1)) : (data.fuelFlow !== undefined ? data.fuelFlow : prev.fuelFlowLitersHr),
-                chtC: Array.isArray(data.cht_c) ? data.cht_c.map((v: any) => typeof v === 'number' ? Number(v.toFixed(1)) : v) : (typeof data.cht_c === 'number' ? [Number(data.cht_c.toFixed(1)), Number((data.cht_c + 1.2).toFixed(1)), Number((data.cht_c - 0.8).toFixed(1)), Number((data.cht_c + 0.5).toFixed(1))] : prev.chtC),
+                oilTempC: data.oil_temp_c !== undefined ? Number((Number(data.oil_temp_c) || 0).toFixed(1)) : (data.oilTemp !== undefined ? data.oilTemp : prev.oilTempC),
+                oilPressureBar: data.oil_pressure_kpa !== undefined ? Number(Number((data.oil_pressure_kpa / 100) || 0).toFixed(2)) : (data.oilPressure !== undefined ? data.oilPressure : prev.oilPressureBar),
+                fuelPressureBar: data.fuel_pressure_kpa !== undefined ? Number(Number((data.fuel_pressure_kpa / 100) || 0).toFixed(2)) : prev.fuelPressureBar,
+                fuelFlowLitersHr: data.fuel_flow_lph !== undefined ? Number((Number(data.fuel_flow_lph) || 0).toFixed(1)) : (data.fuelFlow !== undefined ? data.fuelFlow : prev.fuelFlowLitersHr),
+                chtC: Array.isArray(data.cht_c) ? data.cht_c.map((v: any) => typeof v === 'number' ? Number((Number(v) || 0).toFixed(1)) : v) : (typeof data.cht_c === 'number' ? [Number((Number(data.cht_c) || 0).toFixed(1)), Number(Number((data.cht_c + 1.2) || 0).toFixed(1)), Number(Number((data.cht_c - 0.8) || 0).toFixed(1)), Number(Number((data.cht_c + 0.5) || 0).toFixed(1))] : prev.chtC),
                 egtC: Array.isArray(data.egt_c) ? data.egt_c : (typeof data.egt_c === 'number' ? [Math.round(data.egt_c), Math.round(data.egt_c + 5), Math.round(data.egt_c - 4), Math.round(data.egt_c + 3)] : prev.egtC),
                 turbochargerRpm: data.turbochargerRpm !== undefined ? data.turbochargerRpm : prev.turbochargerRpm,
-                turboBoostBar: data.turbo_boost !== undefined ? Number(data.turbo_boost.toFixed(2)) : prev.turboBoostBar,
-                vibrationRmsMmS: data.vib_z_g !== undefined ? Number((data.vib_z_g * 10).toFixed(2)) : prev.vibrationRmsMmS,
+                turboBoostBar: data.turbo_boost !== undefined ? Number((Number(data.turbo_boost) || 0).toFixed(2)) : prev.turboBoostBar,
+                vibrationRmsMmS: data.vib_z_g !== undefined ? Number(Number((data.vib_z_g * 10) || 0).toFixed(2)) : prev.vibrationRmsMmS,
                 vibrationFftPeakHz: data.vibrationFftPeakHz !== undefined ? data.vibrationFftPeakHz : prev.vibrationFftPeakHz,
                 knockIndex: data.knockIndex !== undefined ? data.knockIndex : prev.knockIndex,
-                lambdaAirFuelRatio: data.lambda !== undefined ? Number(data.lambda.toFixed(2)) : prev.lambdaAirFuelRatio,
+                lambdaAirFuelRatio: data.lambda !== undefined ? Number((Number(data.lambda) || 0).toFixed(2)) : prev.lambdaAirFuelRatio,
                 ambientTempC: data.ambientTempC !== undefined ? data.ambientTempC : prev.ambientTempC,
                 ambientPressureHpa: data.ambientPressureHpa !== undefined ? data.ambientPressureHpa : prev.ambientPressureHpa,
               }));
@@ -247,7 +247,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               if (data.health_score !== undefined || data.health !== undefined) {
                 const rawHealth = data.health_score !== undefined ? data.health_score : data.health;
                 const healthVal = (typeof rawHealth === 'number' && rawHealth > 0) ? rawHealth : 88.4;
-                setUavFleet(prev => prev.map(u => u.id === selectedUavId ? { ...u, engineHealthIndex: Number(healthVal.toFixed(1)) } : u));
+                setUavFleet(prev => prev.map(u => u.id === selectedUavId ? { ...u, engineHealthIndex: Number((Number(healthVal) || 0).toFixed(1)) } : u));
               }
 
               // Dynamic 1:1 Fault Synchronization strictly from Simulator Stream Payload

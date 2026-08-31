@@ -112,7 +112,7 @@ export const Gauge: React.FC<GaugeProps> = ({
             className="font-mono-code font-extrabold text-2xl md:text-3xl tracking-wide text-[#F8FAFC]"
             style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.25)' }}
           >
-            {value.toFixed(decimals)}
+            {(Number(value) || 0).toFixed(decimals)}
           </span>
           <span className="text-[12px] font-mono-code text-[#60A5FA] font-bold uppercase tracking-widest mt-0.5">
             {unit}
@@ -128,7 +128,7 @@ export const Gauge: React.FC<GaugeProps> = ({
             className="font-extrabold"
             style={{ color: diffFromExpected > 0 ? '#00F5A0' : '#FF6B6B' }}
           >
-            Δ {diffFromExpected > 0 ? `+${diffFromExpected.toFixed(decimals)}` : diffFromExpected.toFixed(decimals)}
+            Δ {diffFromExpected > 0 ? `+${(Number(diffFromExpected) || 0).toFixed(decimals)}` : (Number(diffFromExpected) || 0).toFixed(decimals)}
           </span>
         )}
         {subtext && <span className="text-[#B7C0D1]">{subtext}</span>}

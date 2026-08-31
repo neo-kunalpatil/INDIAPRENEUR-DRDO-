@@ -63,7 +63,7 @@ export const AIPredictionsPage: React.FC = () => {
     const baseRul = 142.6 + customRulOffsetHours;
     const thermalStressFactor = Math.pow(calcEgtC / 760, 2) * Math.pow(calcChtC / 125, 2);
     const wearMultiplier = Number((thermalStressFactor * (simThrottlePercent / 75) * (simInjectedFault !== 'NONE' ? 1.45 : 1.0)).toFixed(2));
-    const calcRulHours = Number((baseRul / wearMultiplier).toFixed(1));
+    const calcRulHours = Number(Number((baseRul / wearMultiplier) || 0).toFixed(1));
     const calcEngineHealthPercent = Math.max(10, Number((100 - (142.6 - calcRulHours) * 0.42).toFixed(1)));
     
     // 5. Softmax Mission Risk Score (%)
@@ -113,7 +113,7 @@ export const AIPredictionsPage: React.FC = () => {
     HIGH_ALTITUDE: {
       missionType: 'High Altitude Surveillance (FL220 - FL280)',
       environmentalCondition: '-14°C Ambient, 432 hPa (Low Density Air)',
-      estimatedRulHours: Number((142.6 + customRulOffsetHours).toFixed(1)),
+      estimatedRulHours: Number(Number((142.6 + customRulOffsetHours) || 0).toFixed(1)),
       confidencePercent: 96.8,
       criticalLimitingComponent: 'Turbocharger Impeller & Cyl #3 Exhaust Valve',
       riskFactor: 'LOW',
@@ -122,7 +122,7 @@ export const AIPredictionsPage: React.FC = () => {
     HOT_DESERT: {
       missionType: 'Thar Border Sector (Hot & High +42°C Surface)',
       environmentalCondition: '+42°C Ambient, Fine Dust Ingestion Risk',
-      estimatedRulHours: Number((98.4 + customRulOffsetHours).toFixed(1)),
+      estimatedRulHours: Number(Number((98.4 + customRulOffsetHours) || 0).toFixed(1)),
       confidencePercent: 94.2,
       criticalLimitingComponent: 'Cylinder Head Thermal Baffles & Lube Oil Viscosity',
       riskFactor: 'MODERATE',
@@ -131,7 +131,7 @@ export const AIPredictionsPage: React.FC = () => {
     SEA_LEVEL: {
       missionType: 'Maritime EEZ Patrol (Low Alt 2,500 FT)',
       environmentalCondition: '+28°C Ambient, High Humidity & Salt Mist',
-      estimatedRulHours: Number((210.0 + customRulOffsetHours).toFixed(1)),
+      estimatedRulHours: Number(Number((210.0 + customRulOffsetHours) || 0).toFixed(1)),
       confidencePercent: 98.4,
       criticalLimitingComponent: 'Exhaust Runner Corrosion & Air Filter Intake',
       riskFactor: 'LOW',
@@ -140,7 +140,7 @@ export const AIPredictionsPage: React.FC = () => {
     COMBAT_HIGH_G: {
       missionType: 'Evasive Maneuver & Maximum Continuous Power (MCP)',
       environmentalCondition: 'Full Throttle 5,800 RPM, 39 inHg Boost, +3.5G Turns',
-      estimatedRulHours: Number((46.2 + customRulOffsetHours).toFixed(1)),
+      estimatedRulHours: Number(Number((46.2 + customRulOffsetHours) || 0).toFixed(1)),
       confidencePercent: 91.5,
       criticalLimitingComponent: 'Main Crankshaft Hydrodynamic Bearings & Piston Crown',
       riskFactor: 'CRITICAL',
@@ -165,7 +165,7 @@ export const AIPredictionsPage: React.FC = () => {
       featureCategory: 'MECHANICAL',
       contributionScore: +0.28,
       baselineValue: '1.8 mm/s',
-      currentObservedValue: `${(telemetry.vibrationRmsMmS * 0.7).toFixed(1)} mm/s`,
+      currentObservedValue: `${(Number(telemetry.vibrationRmsMmS * 0.7) || 0).toFixed(1)} mm/s`,
       explanation: 'Firing frequency vibration harmonic slightly elevated, contributing to valvetrain wear rate.',
     },
     {
@@ -173,7 +173,7 @@ export const AIPredictionsPage: React.FC = () => {
       featureCategory: 'COMBUSTION',
       contributionScore: telemetry.knockIndex > 0.4 ? +0.65 : -0.15,
       baselineValue: '0.05 (Zero Knock)',
-      currentObservedValue: telemetry.knockIndex.toFixed(2),
+      currentObservedValue: (Number(telemetry.knockIndex) || 0).toFixed(2),
       explanation: telemetry.knockIndex > 0.4 
         ? 'High pre-ignition acoustic energy accelerates piston ring land erosion.' 
         : 'Smooth combustion flame front preserves combustion chamber integrity.',
@@ -423,7 +423,7 @@ export const AIPredictionsPage: React.FC = () => {
               onChange={(e) => setSimThrottlePercent(Number(e.target.value))}
               className="w-full accent-indigo-500 cursor-pointer"
             />
-            <span className="text-[9px] text-slate-500 mt-1 block">MAP: {(simThrottlePercent * 0.41).toFixed(1)} inHg</span>
+            <span className="text-[9px] text-slate-500 mt-1 block">MAP: {(Number(simThrottlePercent * 0.41) || 0).toFixed(1)} inHg</span>
           </div>
 
           <div className="p-2.5 bg-slate-950/80 rounded-xl border border-slate-800">
@@ -515,14 +515,14 @@ export const AIPredictionsPage: React.FC = () => {
                 <tr 
                   onClick={() => openMetricInvestigation('Cylinder Head Temperature (CHT) Heat Balance', {
                     equation: 'Q_combustion - Q_cooling - Q_exhaust = m * c_p * (dT/dt)',
-                    current: `${Math.max(...telemetry.chtC).toFixed(1)}°C`,
+                    current: `${Math.max(Number(...telemetry.chtC) || 0).toFixed(1)}°C`,
                     scenario: `${simCalculatedMetrics.calcChtC}°C`,
                     explanation: 'Cylinder head temperature dictates thermal expansion and piston ring land tolerances.'
                   })}
                   className="hover:bg-slate-900 cursor-pointer transition-colors"
                 >
                   <td className="py-2 font-bold text-slate-200">Cylinder Head Temp (CHT)</td>
-                  <td className="py-2 text-slate-400 font-telemetry">{Math.max(...telemetry.chtC).toFixed(1)}°C</td>
+                  <td className="py-2 text-slate-400 font-telemetry">{Math.max(Number(...telemetry.chtC) || 0).toFixed(1)}°C</td>
                   <td className="py-2 text-amber-300 font-bold font-telemetry">{simCalculatedMetrics.calcChtC}°C</td>
                   <td className="py-2 text-amber-400 font-bold">+{Math.round(simCalculatedMetrics.calcChtC - Math.max(...telemetry.chtC))}°C</td>
                   <td className="py-2 text-right font-bold text-amber-300">{simCalculatedMetrics.calcChtC > 140 ? '⚠️ ELEVATED CHT' : '✓ NORMAL'}</td>
@@ -547,14 +547,14 @@ export const AIPredictionsPage: React.FC = () => {
                 <tr 
                   onClick={() => openMetricInvestigation('Palmgren-Miner RUL Wear Rate Calculation', {
                     equation: 'RUL = Base_RUL / Wear_Multiplier, Wear_Multiplier = (EGT/760)^2 * (CHT/125)^2',
-                    current: `${(142.6 + customRulOffsetHours).toFixed(1)}h`,
+                    current: `${(Number(142.6 + customRulOffsetHours) || 0).toFixed(1)}h`,
                     scenario: `${simCalculatedMetrics.calcRulHours}h`,
                     explanation: 'Exponential thermal degradation reduces engine useful life hours based on continuous stress cycles.'
                   })}
                   className="hover:bg-slate-900 cursor-pointer transition-colors"
                 >
                   <td className="py-2 font-bold text-slate-200">Remaining Useful Life (RUL)</td>
-                  <td className="py-2 text-slate-400 font-telemetry">{(142.6 + customRulOffsetHours).toFixed(1)}h</td>
+                  <td className="py-2 text-slate-400 font-telemetry">{(Number(142.6 + customRulOffsetHours) || 0).toFixed(1)}h</td>
                   <td className="py-2 text-cyan-300 font-bold font-telemetry">{simCalculatedMetrics.calcRulHours}h</td>
                   <td className="py-2 text-red-400 font-bold">{(simCalculatedMetrics.calcRulHours - (142.6 + customRulOffsetHours)).toFixed(1)}h</td>
                   <td className="py-2 text-right font-bold text-cyan-400">WEAR MULTIPLIER: {simCalculatedMetrics.wearMultiplier}x</td>
@@ -693,9 +693,9 @@ export const AIPredictionsPage: React.FC = () => {
               return (
                 <div 
                   key={idx}
-                  onClick={() => openMetricInvestigation(`SHAP Feature: ${attr.featureName}`, {
+                  onClick={() => openMetricInvestigation(Number(`SHAP Feature: ${attr.featureName}`, {
                     category: attr.featureCategory,
-                    contribution: `${(attr.contributionScore * 100).toFixed(0)}%`,
+                    contribution: `${(attr.contributionScore * 100) || 0).toFixed(0)}%`,
                     observed: attr.currentObservedValue,
                     baseline: attr.baselineValue,
                     explanation: attr.explanation,
@@ -708,7 +708,7 @@ export const AIPredictionsPage: React.FC = () => {
                   <div className="flex items-center justify-between font-mono-code mb-1">
                     <span className="font-bold text-slate-100 group-hover:text-cyan-300">{attr.featureName}</span>
                     <span className={`font-bold ${isDetrimental ? 'text-red-400' : 'text-emerald-400'}`}>
-                      {isDetrimental ? `+${(attr.contributionScore * 100).toFixed(0)}% Degradation Bias` : `${(attr.contributionScore * 100).toFixed(0)}% Preservation Bias`}
+                      {isDetrimental ? `+${(Number(attr.contributionScore * 100) || 0).toFixed(0)}% Degradation Bias` : `${(Number(attr.contributionScore * 100) || 0).toFixed(0)}% Preservation Bias`}
                     </span>
                   </div>
 
@@ -924,11 +924,11 @@ export const AIPredictionsPage: React.FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center pt-1">
                     <div className="p-2 bg-slate-950 rounded border border-slate-800">
                       <span className="text-slate-500 text-[10px] block">CURRENT LIVE</span>
-                      <span className="font-bold text-cyan-300 text-sm font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</span>
+                      <span className="font-bold text-cyan-300 text-sm font-telemetry">{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</span>
                     </div>
                     <div className="p-2 bg-slate-950 rounded border border-slate-800">
                       <span className="text-slate-500 text-[10px] block">PEAK CHT</span>
-                      <span className="font-bold text-amber-300 text-sm font-telemetry">{Math.max(...telemetry.chtC).toFixed(1)}°C</span>
+                      <span className="font-bold text-amber-300 text-sm font-telemetry">{Math.max(Number(...telemetry.chtC) || 0).toFixed(1)}°C</span>
                     </div>
                     <div className="p-2 bg-slate-950 rounded border border-slate-800">
                       <span className="text-slate-500 text-[10px] block">PEAK EGT</span>
@@ -936,7 +936,7 @@ export const AIPredictionsPage: React.FC = () => {
                     </div>
                     <div className="p-2 bg-slate-950 rounded border border-slate-800">
                       <span className="text-slate-500 text-[10px] block">VIBRATION RMS</span>
-                      <span className="font-bold text-indigo-300 text-sm font-telemetry">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</span>
+                      <span className="font-bold text-indigo-300 text-sm font-telemetry">{(Number(telemetry.vibrationRmsMmS) || 0).toFixed(2)} mm/s</span>
                     </div>
                   </div>
                 </div>
@@ -1055,7 +1055,7 @@ export const AIPredictionsPage: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                   <div className="p-2 bg-slate-950 rounded border border-slate-800">
                     <span className="text-slate-500 text-[10px] block">OIL PRESSURE</span>
-                    <span className="font-bold text-cyan-300 font-telemetry">{telemetry.oilPressureBar.toFixed(2)} bar</span>
+                    <span className="font-bold text-cyan-300 font-telemetry">{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</span>
                   </div>
                   <div className="p-2 bg-slate-950 rounded border border-slate-800">
                     <span className="text-slate-500 text-[10px] block">PEAK CHT</span>
@@ -1076,14 +1076,14 @@ export const AIPredictionsPage: React.FC = () => {
               <div className="space-y-2">
                 <h3 className="font-bold text-sm text-cyan-300 border-b border-slate-800 pb-1">3. EXPLAINABLE AI (XAI) SHAP PARAMETER IMPORTANCE</h3>
                 <div className="space-y-1.5">
-                  {shapAttributions.map((a, i) => (
+                  {shapAttributions.map((a, i) => (Number(
                     <div key={i} className="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between items-center text-xs">
                       <div>
                         <span className="font-bold text-slate-200 block">{a.featureName}</span>
                         <span className="text-slate-400 text-[10px]">{a.explanation}</span>
                       </div>
                       <span className={`font-bold ${a.contributionScore > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {(a.contributionScore * 100).toFixed(0)}% BIAS
+                        {(a.contributionScore * 100) || 0).toFixed(0)}% BIAS
                       </span>
                     </div>
                   ))}
@@ -1235,7 +1235,7 @@ export const AIPredictionsPage: React.FC = () => {
                             <span className="text-amber-400 font-bold">+{(simCalculatedMetrics.calcChtC - 125)}°C Med Impact</span>
                           </div>
                           <div className="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between">
-                            <div><strong className="block text-slate-200">Oil Line Pressure</strong><span className="text-slate-400">Observed: {telemetry.oilPressureBar.toFixed(2)} bar (Nominal: 4.2 bar)</span></div>
+                            <div><strong className="block text-slate-200">Oil Line Pressure</strong><span className="text-slate-400">Observed: {(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar (Nominal: 4.2 bar)</span></div>
                             <span className="text-emerald-400 font-bold">Stable Protective</span>
                           </div>
                         </div>

@@ -241,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
             </div>
             <div>
               <span className="text-gray-500">HLT: </span>
-              <span className="text-emerald-400 font-bold">{selectedUav.engineHealthIndex.toFixed(1)}%</span>
+              <span className="text-emerald-400 font-bold">{(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}%</span>
             </div>
           </div>
         </div>

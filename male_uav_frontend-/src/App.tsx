@@ -1,3 +1,4 @@
+import { ErrorBoundary } from './components/ErrorBoundary';
 import React, { useState, useEffect } from 'react';
 import { GcsProvider, useGcs } from './contexts/GcsContext';
 import { ThemeProvider } from './contexts/ThemeContext';

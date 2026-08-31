@@ -22,23 +22,23 @@ export const SystemHealthPage: React.FC = () => {
 
   const liveSensors = [
     { name: 'Engine RPM', val: `${telemetry.rpm.toLocaleString()} RPM`, hz: '100 Hz', status: 'VALID' },
-    { name: 'MAP Boost', val: `${telemetry.turboBoostBar.toFixed(2)} bar`, hz: '50 Hz', status: 'VALID' },
-    { name: 'Cyl 1 CHT', val: `${telemetry.chtC[0].toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
-    { name: 'Cyl 2 CHT', val: `${telemetry.chtC[1].toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
-    { name: 'Cyl 3 CHT', val: `${telemetry.chtC[2].toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
-    { name: 'Cyl 4 CHT', val: `${telemetry.chtC[3].toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
+    { name: 'MAP Boost', val: `${(Number(telemetry.turboBoostBar) || 0).toFixed(2)} bar`, hz: '50 Hz', status: 'VALID' },
+    { name: 'Cyl 1 CHT', val: `${(Number(telemetry.chtC[0]) || 0).toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
+    { name: 'Cyl 2 CHT', val: `${(Number(telemetry.chtC[1]) || 0).toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
+    { name: 'Cyl 3 CHT', val: `${(Number(telemetry.chtC[2]) || 0).toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
+    { name: 'Cyl 4 CHT', val: `${(Number(telemetry.chtC[3]) || 0).toFixed(1)}°C`, hz: '20 Hz', status: 'VALID' },
     { name: 'Cyl 1 EGT', val: `${telemetry.egtC[0]}°C`, hz: '20 Hz', status: 'VALID' },
     { name: 'Cyl 2 EGT', val: `${telemetry.egtC[1]}°C`, hz: '20 Hz', status: 'VALID' },
     { name: 'Cyl 3 EGT', val: `${telemetry.egtC[2]}°C`, hz: '20 Hz', status: 'VALID' },
     { name: 'Cyl 4 EGT', val: `${telemetry.egtC[3]}°C`, hz: '20 Hz', status: 'VALID' },
-    { name: 'Oil Pressure', val: `${telemetry.oilPressureBar.toFixed(2)} bar`, hz: '50 Hz', status: 'VALID' },
+    { name: 'Oil Pressure', val: `${(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar`, hz: '50 Hz', status: 'VALID' },
     { name: 'Oil Temp', val: `${telemetry.oilTempC}°C`, hz: '20 Hz', status: 'VALID' },
-    { name: 'Fuel Flow', val: `${(telemetry.fuelFlowLitersHr || 24.5).toFixed(1)} L/h`, hz: '50 Hz', status: 'VALID' },
+    { name: 'Fuel Flow', val: `${(Number(telemetry.fuelFlowLitersHr || 24.5) || 0).toFixed(1)} L/h`, hz: '50 Hz', status: 'VALID' },
     { name: 'Battery Volts', val: `14.2 V`, hz: '10 Hz', status: 'VALID' },
     { name: 'Turbo Speed', val: `${telemetry.turbochargerRpm.toLocaleString()} RPM`, hz: '100 Hz', status: 'VALID' },
     { name: 'Air Altitude', val: `${selectedUav.altitudeFt.toLocaleString()} FT`, hz: '10 Hz', status: 'VALID' },
     { name: 'Air Speed', val: `${selectedUav.airspeedKts} KTS`, hz: '20 Hz', status: 'VALID' },
-    { name: 'Knock Index', val: `${telemetry.knockIndex.toFixed(2)}`, hz: '100 Hz', status: 'VALID' },
+    { name: 'Knock Index', val: `${(Number(telemetry.knockIndex) || 0).toFixed(2)}`, hz: '100 Hz', status: 'VALID' },
   ];
 
   const subsystems = [
@@ -298,7 +298,7 @@ export const SystemHealthPage: React.FC = () => {
         )}
 
         {/* 2. Physics Thermodynamic Engine Panel */}
-        {selectedSubsystem === 'physics' && (
+        {selectedSubsystem === 'physics' && (Number(
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-4 font-mono-code text-xs">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ export const SystemHealthPage: React.FC = () => {
 
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
                 <span className="text-amber-400 font-bold text-[10px] block uppercase">2. TURBOCHARGER DYNAMICS</span>
-                <div className="text-slate-100 font-bold text-sm">PR: { (telemetry.turboBoostBar + 1.0).toFixed(2) } : 1</div>
+                <div className="text-slate-100 font-bold text-sm">PR: { (telemetry.turboBoostBar + 1.0) || 0).toFixed(2) } : 1</div>
                 <div className="text-slate-400 text-[10px]">Comp Efficiency: 76.8%</div>
                 <div className="text-cyan-400 text-[10px]">Turbine Speed: { telemetry.turbochargerRpm.toLocaleString() } RPM</div>
               </div>
@@ -376,7 +376,7 @@ export const SystemHealthPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-slate-400 text-[10px] block">PREDICTED RUL</span>
-                <span className="font-telemetry font-bold text-xl text-emerald-400">{ selectedUav.predictedRulHours.toFixed(1) } hrs</span>
+                <span className="font-telemetry font-bold text-xl text-emerald-400">{ (Number(selectedUav.predictedRulHours) || 0).toFixed(1) } hrs</span>
                 <span className="text-[10px] text-slate-500 block mt-1">Palmgren-Miner Fatigue Decay</span>
               </div>
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">

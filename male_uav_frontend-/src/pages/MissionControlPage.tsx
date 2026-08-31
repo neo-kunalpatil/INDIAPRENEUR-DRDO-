@@ -53,7 +53,7 @@ export const MissionControlPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <MetricCard
           title="Mission Risk Index"
-          value={`${selectedUav.missionRiskScore.toFixed(1)}%`}
+          value={`${(Number(selectedUav.missionRiskScore) || 0).toFixed(1)}%`}
           status={isGo ? 'NORMAL' : 'CRITICAL'}
           change={isGo ? 'Within 30% Safety Ceiling' : 'Risk Exceeds Safety Margin'}
           changeType={isGo ? 'positive' : 'negative'}
@@ -62,7 +62,7 @@ export const MissionControlPage: React.FC = () => {
         />
         <MetricCard
           title="Remaining Fuel Endurance"
-          value={`${(selectedUav.fuelRemainingKg / 14.5).toFixed(1)}h`}
+          value={`${(Number(selectedUav.fuelRemainingKg / 14.5) || 0).toFixed(1)}h`}
           status="HIGHLIGHT"
           change={`${selectedUav.fuelRemainingKg} kg onboard`}
           changeType="positive"

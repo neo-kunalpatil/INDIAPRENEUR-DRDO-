@@ -185,7 +185,7 @@ export const MaintenancePage: React.FC = () => {
                 <div key={idx} className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="font-bold text-slate-100">{comp.name}</span>
-                    <span className="text-emerald-400 font-bold">{comp.remainingPct.toFixed(1)}% LIFE LEFT</span>
+                    <span className="text-emerald-400 font-bold">{(Number(comp.remainingPct) || 0).toFixed(1)}% LIFE LEFT</span>
                   </div>
                   <div className="w-full bg-slate-900 rounded-full h-2 border border-slate-800 overflow-hidden">
                     <div 

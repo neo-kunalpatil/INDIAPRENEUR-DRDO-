@@ -94,7 +94,7 @@ export const ReportsPage: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px]">
             <div className="p-2.5 rounded bg-slate-950 border border-slate-800">
               <span className="text-slate-400 block text-[10px]">ADAPTIVE HEALTH INDEX</span>
-              <strong className="text-emerald-400 text-base">{selectedUav.engineHealthIndex.toFixed(1)}% (Nominal)</strong>
+              <strong className="text-emerald-400 text-base">{(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}% (Nominal)</strong>
             </div>
             <div className="p-2.5 rounded bg-slate-950 border border-slate-800">
               <span className="text-slate-400 block text-[10px]">MISSION-AWARE RUL</span>

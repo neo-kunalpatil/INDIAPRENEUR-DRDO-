@@ -123,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
             >
               {uavFleet.map((uav) => (
                 <option key={uav.id} value={uav.id} className="bg-[#111318] text-white">
-                  {uav.callsign} ({uav.engineHealthIndex.toFixed(0)}% HLT)
+                  {uav.callsign} ({(Number(uav.engineHealthIndex) || 0).toFixed(0)}% HLT)
                 </option>
               ))}
             </select>
@@ -153,7 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleChat, isChatOpen }) => {
                 selectedUav.engineHealthIndex > 80 ? 'text-emerald-400' :
                 selectedUav.engineHealthIndex > 65 ? 'text-amber-400' : 'text-red-400'
               }`}>
-                {selectedUav.engineHealthIndex.toFixed(1)}%
+                {(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}%
               </span>
             </div>
             <div className="h-3 w-px bg-[#2A2D33]" />

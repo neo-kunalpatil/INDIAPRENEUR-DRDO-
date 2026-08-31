@@ -120,7 +120,7 @@ export const FleetMonitoringPage: React.FC = () => {
                   <span className={`font-telemetry font-bold text-lg ${
                     uav.engineHealthIndex > 80 ? 'text-emerald-400' : 'text-amber-400'
                   }`}>
-                    {uav.engineHealthIndex.toFixed(1)}%
+                    {(Number(uav.engineHealthIndex) || 0).toFixed(1)}%
                   </span>
                 </div>
 
@@ -141,7 +141,7 @@ export const FleetMonitoringPage: React.FC = () => {
                 <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
                   <span className="text-slate-500 text-[10px] block">REMAINING FUEL</span>
                   <span className="font-bold text-slate-200 text-[11px] block">
-                    {uav.fuelRemainingKg} kg ({(uav.fuelRemainingKg / 14.5).toFixed(1)}h)
+                    {uav.fuelRemainingKg} kg (Number({(uav.fuelRemainingKg / 14.5) || 0).toFixed(1)}h)
                   </span>
                 </div>
               </div>

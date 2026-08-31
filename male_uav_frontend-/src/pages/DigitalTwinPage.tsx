@@ -93,7 +93,7 @@ export const DigitalTwinPage: React.FC = () => {
       healthScore: telemetry.turbochargerRpm > 140000 ? 76.5 : 95.8,
       physicsExpectedTemp: 690.0,
       material: 'Inconel 718 Superalloy & Ceramic Ball Bearings',
-      notes: `Compressor RPM: ${telemetry.turbochargerRpm.toLocaleString()} RPM. Boost: ${telemetry.turboBoostBar.toFixed(2)} bar.`,
+      notes: `Compressor RPM: ${telemetry.turbochargerRpm.toLocaleString()} RPM. Boost: ${(Number(telemetry.turboBoostBar) || 0).toFixed(2)} bar.`,
     },
     crankcase: {
       name: 'Split Alloy Crankcase Core',
@@ -104,7 +104,7 @@ export const DigitalTwinPage: React.FC = () => {
       healthScore: 98.4,
       physicsExpectedTemp: 88.0,
       material: 'Cast Aircraft Grade Aluminum-Magnesium Alloy',
-      notes: `Oil Pressure: ${telemetry.oilPressureBar.toFixed(2)} bar. Hydrodynamic main bearing oil film stable.`,
+      notes: `Oil Pressure: ${(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar. Hydrodynamic main bearing oil film stable.`,
     },
     gearbox_prop_governor: {
       name: 'Integrated Reduction Gearbox (1:2.43)',
@@ -239,7 +239,7 @@ export const DigitalTwinPage: React.FC = () => {
               >
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-100">
                   <span>CRANKCASE CORE</span>
-                  <span>{telemetry.oilPressureBar.toFixed(2)} bar</span>
+                  <span>{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</span>
                 </div>
                 <div className="text-center font-bold text-slate-100 text-sm">ROTAX 914-TC</div>
                 <div className="text-[9px] text-slate-200">Lube Temp: {telemetry.oilTempC}°C</div>
@@ -259,7 +259,7 @@ export const DigitalTwinPage: React.FC = () => {
               >
                 <div className="flex justify-between items-center text-[9px] font-bold text-slate-100">
                   <span>CYL #1</span>
-                  <span>{telemetry.chtC[0].toFixed(1)}°C</span>
+                  <span>{(Number(telemetry.chtC[0]) || 0).toFixed(1)}°C</span>
                 </div>
                 <div className="space-y-1 my-auto">
                   <div className="w-full h-1 bg-white/40 rounded" />
@@ -283,7 +283,7 @@ export const DigitalTwinPage: React.FC = () => {
               >
                 <div className="flex justify-between items-center text-[9px] font-bold text-slate-100">
                   <span>CYL #2</span>
-                  <span>{telemetry.chtC[1].toFixed(1)}°C</span>
+                  <span>{(Number(telemetry.chtC[1]) || 0).toFixed(1)}°C</span>
                 </div>
                 <div className="space-y-1 my-auto">
                   <div className="w-full h-1 bg-white/40 rounded" />
@@ -307,7 +307,7 @@ export const DigitalTwinPage: React.FC = () => {
               >
                 <div className="flex justify-between items-center text-[9px] font-bold text-slate-100">
                   <span>CYL #3</span>
-                  <span>{telemetry.chtC[2].toFixed(1)}°C</span>
+                  <span>{(Number(telemetry.chtC[2]) || 0).toFixed(1)}°C</span>
                 </div>
                 <div className="space-y-1 my-auto">
                   <div className="w-full h-1 bg-white/40 rounded" />
@@ -331,7 +331,7 @@ export const DigitalTwinPage: React.FC = () => {
               >
                 <div className="flex justify-between items-center text-[9px] font-bold text-slate-100">
                   <span>CYL #4</span>
-                  <span>{telemetry.chtC[3].toFixed(1)}°C</span>
+                  <span>{(Number(telemetry.chtC[3]) || 0).toFixed(1)}°C</span>
                 </div>
                 <div className="space-y-1 my-auto">
                   <div className="w-full h-1 bg-white/40 rounded" />
@@ -355,7 +355,7 @@ export const DigitalTwinPage: React.FC = () => {
               >
                 <span className="text-[9px] font-bold text-slate-100">TURBOCHARGER</span>
                 <span className="font-telemetry font-bold text-slate-100 text-xs">{telemetry.turbochargerRpm.toLocaleString()} RPM</span>
-                <span className="text-[8px] text-slate-200">Boost: {telemetry.turboBoostBar.toFixed(2)} bar</span>
+                <span className="text-[8px] text-slate-200">Boost: {(Number(telemetry.turboBoostBar) || 0).toFixed(2)} bar</span>
               </div>
 
               {/* 3D Reduction Gearbox Trapezoid & Propeller Shaft (Bottom Center) */}
@@ -453,7 +453,7 @@ export const DigitalTwinPage: React.FC = () => {
               <span className={`font-telemetry font-bold text-xl ${
                 currentComp.healthScore > 85 ? 'text-emerald-400' : 'text-amber-400'
               }`}>
-                {currentComp.healthScore.toFixed(1)}%
+                {(Number(currentComp.healthScore) || 0).toFixed(1)}%
               </span>
             </div>
 

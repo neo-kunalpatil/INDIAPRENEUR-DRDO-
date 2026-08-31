@@ -187,7 +187,7 @@ export const LiveMonitoringPage: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[0, 1, 2, 3].map((idx) => {
                   const rawCht = telemetry.chtC[idx];
-                  const cht = typeof rawCht === 'number' ? Number(rawCht.toFixed(1)) : rawCht;
+                  const cht = typeof rawCht === 'number' ? Number((Number(rawCht) || 0).toFixed(1)) : rawCht;
                   const rawEgt = telemetry.egtC[idx];
                   const egt = typeof rawEgt === 'number' ? Math.round(rawEgt) : rawEgt;
                   const isHot = (typeof cht === 'number' && cht > 125) || (typeof egt === 'number' && egt > 820);
@@ -234,8 +234,8 @@ export const LiveMonitoringPage: React.FC = () => {
               </div>
 
               <div className="mt-3 p-3 rounded-xl bg-slate-950/90 border border-slate-800/80 flex items-center justify-between text-xs font-mono-code text-slate-400">
-                <span>Bank 1 vs Bank 2 Disparity: <strong className="text-emerald-400">+{chtDisparity.toFixed(1)}°C (NOMINAL)</strong></span>
-                <span>Lambda Ratio: <strong className="text-cyan-300">λ {telemetry.lambdaAirFuelRatio.toFixed(2)}</strong></span>
+                <span>Bank 1 vs Bank 2 Disparity: <strong className="text-emerald-400">+{(Number(chtDisparity) || 0).toFixed(1)}°C (NOMINAL)</strong></span>
+                <span>Lambda Ratio: <strong className="text-cyan-300">λ {(Number(telemetry.lambdaAirFuelRatio) || 0).toFixed(2)}</strong></span>
               </div>
             </div>
 
@@ -264,14 +264,14 @@ export const LiveMonitoringPage: React.FC = () => {
                         style={{ width: `${Math.min(100, (bin.mag / 8) * 100)}%` }}
                       />
                     </div>
-                    <span className="w-16 font-bold text-slate-100 text-right">{bin.mag.toFixed(1)} mm/s</span>
+                    <span className="w-16 font-bold text-slate-100 text-right">{(Number(bin.mag) || 0).toFixed(1)} mm/s</span>
                     <span className="w-28 text-[10px] text-slate-400 font-bold truncate">{bin.label}</span>
                   </div>
                 ))}
               </div>
 
               <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-xs font-mono-code">
-                <span className="text-slate-400">Total RMS Vibration: <strong className="text-cyan-300">{telemetry.vibrationRmsMmS.toFixed(2)} mm/s</strong></span>
+                <span className="text-slate-400">Total RMS Vibration: <strong className="text-cyan-300">{(Number(telemetry.vibrationRmsMmS) || 0).toFixed(2)} mm/s</strong></span>
                 <span className="text-slate-400">ISO 10816 Class: <strong className={totalVibRms > 4 ? 'text-amber-400' : 'text-emerald-400'}>{totalVibRms > 4 ? 'CLASS II (ELEVATED)' : 'CLASS I (ACCEPTABLE)'}</strong></span>
               </div>
             </div>
@@ -297,7 +297,7 @@ export const LiveMonitoringPage: React.FC = () => {
                   <span>THERMAL DIAGNOSTIC</span>
                 </div>
                 <p className="text-slate-300">
-                  Highest thermal dissipation localized on Cylinder #{maxChtCylIdx} at {maxCht.toFixed(1)}°C. Cylinder head disparity is {chtDisparity.toFixed(1)}°C. Cooling loop running at {coolingEfficiencyPercent.toFixed(0)}% efficiency.
+                  Highest thermal dissipation localized on Cylinder #{maxChtCylIdx} at {(Number(maxCht) || 0).toFixed(1)}°C. Cylinder head disparity is {(Number(chtDisparity) || 0).toFixed(1)}°C. Cooling loop running at {(Number(coolingEfficiencyPercent) || 0).toFixed(0)}% efficiency.
                 </p>
               </div>
 
@@ -307,7 +307,7 @@ export const LiveMonitoringPage: React.FC = () => {
                   <span>HYDRAULIC DIAGNOSTIC</span>
                 </div>
                 <p className="text-slate-300">
-                  Oil pressure baseline stable at {telemetry.oilPressureBar.toFixed(2)} bar. Fuel flow rate is {telemetry.fuelFlowLitersHr.toFixed(1)} L/h with fuel endurance estimated at {estimatedEnduranceHours} hours.
+                  Oil pressure baseline stable at {(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar. Fuel flow rate is {(Number(telemetry.fuelFlowLitersHr) || 0).toFixed(1)} L/h with fuel endurance estimated at {estimatedEnduranceHours} hours.
                 </p>
               </div>
 
@@ -317,7 +317,7 @@ export const LiveMonitoringPage: React.FC = () => {
                   <span>VIBRATION DIAGNOSTIC</span>
                 </div>
                 <p className="text-slate-300">
-                  Dominant mechanical vibration peak at {dominantFreqHz} Hz with RMS of {totalVibRms.toFixed(2)} mm/s. Bearing health confidence index evaluated at {bearingHealthScore.toFixed(0)}%.
+                  Dominant mechanical vibration peak at {dominantFreqHz} Hz with RMS of {(Number(totalVibRms) || 0).toFixed(2)} mm/s. Bearing health confidence index evaluated at {(Number(bearingHealthScore) || 0).toFixed(0)}%.
                 </p>
               </div>
             </div>
@@ -347,22 +347,22 @@ export const LiveMonitoringPage: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-[10px] font-mono-code text-slate-400 block">PEAK CHT TEMP</span>
-                <span className="text-2xl font-bold font-telemetry text-amber-300">{maxCht.toFixed(1)}°C</span>
+                <span className="text-2xl font-bold font-telemetry text-amber-300">{(Number(maxCht) || 0).toFixed(1)}°C</span>
                 <span className="text-[10px] font-mono-code text-slate-500 block mt-1">Cylinder #{maxChtCylIdx}</span>
               </div>
               <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-[10px] font-mono-code text-slate-400 block">CYLINDER IMPRECISION / DISPARITY</span>
-                <span className="text-2xl font-bold font-telemetry text-cyan-300">+{chtDisparity.toFixed(1)}°C</span>
+                <span className="text-2xl font-bold font-telemetry text-cyan-300">+{(Number(chtDisparity) || 0).toFixed(1)}°C</span>
                 <span className="text-[10px] font-mono-code text-emerald-400 block mt-1">NOMINAL (MAX 25°C)</span>
               </div>
               <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-[10px] font-mono-code text-slate-400 block">COOLING LOOP EFFICIENCY</span>
-                <span className="text-2xl font-bold font-telemetry text-emerald-400">{coolingEfficiencyPercent.toFixed(1)}%</span>
+                <span className="text-2xl font-bold font-telemetry text-emerald-400">{(Number(coolingEfficiencyPercent) || 0).toFixed(1)}%</span>
                 <span className="text-[10px] font-mono-code text-slate-500 block mt-1">Radiant Oil & Coolant Heat Sink</span>
               </div>
               <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800">
                 <span className="text-[10px] font-mono-code text-slate-400 block">THERMAL STRESS INDEX</span>
-                <span className="text-2xl font-bold font-telemetry text-orange-400">{thermalStressScore.toFixed(0)} / 100</span>
+                <span className="text-2xl font-bold font-telemetry text-orange-400">{(Number(thermalStressScore) || 0).toFixed(0)} / 100</span>
                 <span className="text-[10px] font-mono-code text-slate-500 block mt-1">Combustion Chamber Load</span>
               </div>
             </div>
@@ -370,7 +370,7 @@ export const LiveMonitoringPage: React.FC = () => {
             {/* Cylinder Heat Matrix */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[0, 1, 2, 3].map((idx) => {
-                const cht = Number(telemetry.chtC[idx].toFixed(1));
+                const cht = Number((Number(telemetry.chtC[idx]) || 0).toFixed(1));
                 const egt = Math.round(telemetry.egtC[idx]);
                 const isHot = cht > 125 || egt > 820;
                 return (
@@ -409,16 +409,16 @@ export const LiveMonitoringPage: React.FC = () => {
 
               <div className="space-y-2 text-slate-300 leading-relaxed">
                 <p>
-                  <strong>WHAT:</strong> Thermal gradient analysis indicates localized thermal dissipation peaking on <span className="text-amber-300">Cylinder #{maxChtCylIdx}</span> at <strong>{maxCht.toFixed(1)}°C</strong> with average CHT at <strong>{avgCht.toFixed(1)}°C</strong>.
+                  <strong>WHAT:</strong> Thermal gradient analysis indicates localized thermal dissipation peaking on <span className="text-amber-300">Cylinder #{maxChtCylIdx}</span> at <strong>{(Number(maxCht) || 0).toFixed(1)}°C</strong> with average CHT at <strong>{(Number(avgCht) || 0).toFixed(1)}°C</strong>.
                 </p>
                 <p>
-                  <strong>WHY:</strong> Exhaust gas temperature on Bank {maxChtCylIdx <= 2 ? 1 : 2} is running at <strong>{maxEgt}°C</strong>, reflecting nominal air-fuel ratio stoichiometry (λ {telemetry.lambdaAirFuelRatio.toFixed(2)}).
+                  <strong>WHY:</strong> Exhaust gas temperature on Bank {maxChtCylIdx <= 2 ? 1 : 2} is running at <strong>{maxEgt}°C</strong>, reflecting nominal air-fuel ratio stoichiometry (λ {(Number(telemetry.lambdaAirFuelRatio) || 0).toFixed(2)}).
                 </p>
                 <p>
-                  <strong>MISSION IMPACT:</strong> <span className="text-emerald-400 font-bold">ZERO MISSION RISK</span>. Cylinder head temperature remains <strong>{(135 - maxCht).toFixed(1)}°C</strong> below redline limit.
+                  <strong>MISSION IMPACT:</strong> <span className="text-emerald-400 font-bold">ZERO MISSION RISK</span>. Cylinder head temperature remains <strong>{(Number(135 - maxCht) || 0).toFixed(1)}°C</strong> below redline limit.
                 </p>
                 <p>
-                  <strong>RECOMMENDED OPERATOR ACTION:</strong> Maintain current cruise throttle position ({telemetry.throttlePercent.toFixed(1)}%). No thermal trim adjustment required.
+                  <strong>RECOMMENDED OPERATOR ACTION:</strong> Maintain current cruise throttle position ({(Number(telemetry.throttlePercent) || 0).toFixed(1)}%). No thermal trim adjustment required.
                 </p>
               </div>
             </div>
@@ -448,22 +448,22 @@ export const LiveMonitoringPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">LUBRICATION HEALTH INDEX</span>
-                <p className="text-3xl font-bold font-telemetry text-cyan-300">{lubricationHealthScore.toFixed(1)}%</p>
+                <p className="text-3xl font-bold font-telemetry text-cyan-300">{(Number(lubricationHealthScore) || 0).toFixed(1)}%</p>
                 <span className="text-[10px] font-mono-code text-emerald-400 block">NOMINAL OIL FILM VISCOSITY</span>
               </div>
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">FUEL FLOW CONSUMPTION</span>
-                <p className="text-3xl font-bold font-telemetry text-emerald-300">{telemetry.fuelFlowLitersHr.toFixed(1)} <span className="text-sm font-normal text-slate-400">L/h</span></p>
+                <p className="text-3xl font-bold font-telemetry text-emerald-300">{(Number(telemetry.fuelFlowLitersHr) || 0).toFixed(1)} <span className="text-sm font-normal text-slate-400">L/h</span></p>
                 <span className="text-[10px] font-mono-code text-slate-400 block">INJECTOR DUTY CYCLE: 64.2%</span>
               </div>
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">REMAINING FUEL ENDURANCE</span>
                 <p className="text-3xl font-bold font-telemetry text-amber-300">{estimatedEnduranceHours} <span className="text-sm font-normal text-slate-400">HOURS</span></p>
-                <span className="text-[10px] font-mono-code text-amber-400 block">{selectedUav.fuelRemainingKg.toFixed(1)} kg UNUSABLE / USABLE TANK</span>
+                <span className="text-[10px] font-mono-code text-amber-400 block">{(Number(selectedUav.fuelRemainingKg) || 0).toFixed(1)} kg UNUSABLE / USABLE TANK</span>
               </div>
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">OIL LINE PRESSURE</span>
-                <p className="text-3xl font-bold font-telemetry text-slate-100">{telemetry.oilPressureBar.toFixed(2)} <span className="text-sm font-normal text-slate-400">bar</span></p>
+                <p className="text-3xl font-bold font-telemetry text-slate-100">{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} <span className="text-sm font-normal text-slate-400">bar</span></p>
                 <span className="text-[10px] font-mono-code text-emerald-400 block">PRESSURE STABILITY: 99.4%</span>
               </div>
             </div>
@@ -480,7 +480,7 @@ export const LiveMonitoringPage: React.FC = () => {
 
               <div className="space-y-2 text-slate-300 leading-relaxed">
                 <p>
-                  <strong>WHAT:</strong> Oil pressure is holding stable at <strong>{telemetry.oilPressureBar.toFixed(2)} bar</strong> with oil temperature steady at <strong>{telemetry.oilTempC.toFixed(1)}°C</strong>.
+                  <strong>WHAT:</strong> Oil pressure is holding stable at <strong>{(Number(telemetry.oilPressureBar) || 0).toFixed(2)} bar</strong> with oil temperature steady at <strong>{(Number(telemetry.oilTempC) || 0).toFixed(1)}°C</strong>.
                 </p>
                 <p>
                   <strong>WHY:</strong> Lubrication pump RPM is synchronised with engine crankshaft speed ({telemetry.rpm} RPM). Hydraulic cavitation probability is <strong>0.02%</strong>.
@@ -519,12 +519,12 @@ export const LiveMonitoringPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">TOTAL RMS VIBRATION</span>
-                <p className="text-3xl font-bold font-telemetry text-cyan-300">{totalVibRms.toFixed(2)} <span className="text-sm font-normal text-slate-400">mm/s</span></p>
+                <p className="text-3xl font-bold font-telemetry text-cyan-300">{(Number(totalVibRms) || 0).toFixed(2)} <span className="text-sm font-normal text-slate-400">mm/s</span></p>
                 <span className="text-[10px] font-mono-code text-emerald-400 block">ISO 10816 CLASS I (ACCEPTABLE)</span>
               </div>
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">BEARING HEALTH INDEX</span>
-                <p className="text-3xl font-bold font-telemetry text-emerald-300">{bearingHealthScore.toFixed(0)}%</p>
+                <p className="text-3xl font-bold font-telemetry text-emerald-300">{(Number(bearingHealthScore) || 0).toFixed(0)}%</p>
                 <span className="text-[10px] font-mono-code text-slate-400 block">MAIN JOURNAL BEARINGS OK</span>
               </div>
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
@@ -556,7 +556,7 @@ export const LiveMonitoringPage: React.FC = () => {
                         style={{ width: `${Math.min(100, (bin.mag / 8) * 100)}%` }}
                       />
                     </div>
-                    <span className="w-20 font-bold text-slate-100 text-right">{bin.mag.toFixed(2)} mm/s</span>
+                    <span className="w-20 font-bold text-slate-100 text-right">{(Number(bin.mag) || 0).toFixed(2)} mm/s</span>
                     <span className="w-36 text-slate-400 truncate">{bin.label}</span>
                   </div>
                 ))}
@@ -575,7 +575,7 @@ export const LiveMonitoringPage: React.FC = () => {
 
               <div className="space-y-2 text-slate-300 leading-relaxed">
                 <p>
-                  <strong>WHAT:</strong> Piezoelectric FFT spectral decomposition shows RMS vibration amplitude of <strong>{totalVibRms.toFixed(2)} mm/s</strong>.
+                  <strong>WHAT:</strong> Piezoelectric FFT spectral decomposition shows RMS vibration amplitude of <strong>{(Number(totalVibRms) || 0).toFixed(2)} mm/s</strong>.
                 </p>
                 <p>
                   <strong>HARMONIC ETIOLOGY:</strong> Dominant peak occurs at <strong>{dominantFreqHz} Hz</strong> corresponding to 1X crankshaft rotational frequency ({telemetry.rpm} RPM / 60). No shaft imbalance or bearing race pitting detected.
@@ -616,12 +616,12 @@ export const LiveMonitoringPage: React.FC = () => {
               </div>
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">BOOST PRESSURE</span>
-                <p className="text-3xl font-bold font-telemetry text-emerald-300">{telemetry.turboBoostBar.toFixed(2)} <span className="text-sm font-normal text-slate-400">bar</span></p>
-                <span className="text-[10px] font-mono-code text-slate-400 block">MANIFOLD MAP: {telemetry.manifoldPressureInHg.toFixed(1)} inHg</span>
+                <p className="text-3xl font-bold font-telemetry text-emerald-300">{(Number(telemetry.turboBoostBar) || 0).toFixed(2)} <span className="text-sm font-normal text-slate-400">bar</span></p>
+                <span className="text-[10px] font-mono-code text-slate-400 block">MANIFOLD MAP: {(Number(telemetry.manifoldPressureInHg) || 0).toFixed(1)} inHg</span>
               </div>
               <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
                 <span className="text-xs font-mono-code text-slate-400">THROTTLE POSITION</span>
-                <p className="text-3xl font-bold font-telemetry text-indigo-300">{telemetry.throttlePercent.toFixed(1)} <span className="text-sm font-normal text-slate-400">%</span></p>
+                <p className="text-3xl font-bold font-telemetry text-indigo-300">{(Number(telemetry.throttlePercent) || 0).toFixed(1)} <span className="text-sm font-normal text-slate-400">%</span></p>
                 <span className="text-[10px] font-mono-code text-emerald-400 block">WASTEGATE SERVO POSITION: 42.8%</span>
               </div>
             </div>
@@ -638,10 +638,10 @@ export const LiveMonitoringPage: React.FC = () => {
 
               <div className="space-y-2 text-slate-300 leading-relaxed">
                 <p>
-                  <strong>WHAT:</strong> Turbocharger impeller speed is operating at <strong>{telemetry.turbochargerRpm.toLocaleString()} RPM</strong> supplying <strong>{telemetry.turboBoostBar.toFixed(2)} bar</strong> boost.
+                  <strong>WHAT:</strong> Turbocharger impeller speed is operating at <strong>{telemetry.turbochargerRpm.toLocaleString()} RPM</strong> supplying <strong>{(Number(telemetry.turboBoostBar) || 0).toFixed(2)} bar</strong> boost.
                 </p>
                 <p>
-                  <strong>AERODYNAMIC INTEGRITY:</strong> Wastegate pneumatic actuator position is responding nominally to throttle adjustments ({telemetry.throttlePercent.toFixed(1)}%).
+                  <strong>AERODYNAMIC INTEGRITY:</strong> Wastegate pneumatic actuator position is responding nominally to throttle adjustments ({(Number(telemetry.throttlePercent) || 0).toFixed(1)}%).
                 </p>
               </div>
             </div>

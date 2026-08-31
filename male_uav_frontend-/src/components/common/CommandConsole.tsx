@@ -89,7 +89,7 @@ export const CommandConsole: React.FC<CommandConsoleProps> = ({ isOpen, onClose 
         </div>
         <div className="p-1.5 rounded bg-slate-950/80 border border-slate-800">
           <span className="text-slate-500 block">HEALTH</span>
-          <span className="font-bold text-emerald-400">{selectedUav.engineHealthIndex.toFixed(1)}%</span>
+          <span className="font-bold text-emerald-400">{(Number(selectedUav.engineHealthIndex) || 0).toFixed(1)}%</span>
         </div>
       </div>
 
