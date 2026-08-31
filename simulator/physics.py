@@ -102,6 +102,7 @@ class EnginePhysics:
             self.stats["triggerSave"] = True
             
         tgt_throttle = self.state["throttle"]
+        print(f"tick: isActive={self.mission.get('isActive')}, phase={phase}")
         tgt_spd = 0.0
         tgt_vs = 0.0
         tgt_pitch = 0.0
@@ -139,7 +140,8 @@ class EnginePhysics:
                 tgt_throttle = 0.0; tgt_spd = 0.0; tgt_vs = 0.0
         
         if self.faults["throttleFailure"]:
-            tgt_throttle = self.state["throttle"] # command ignored
+            tgt_throttle = self.state["throttle"]
+        print(f"tick: isActive={self.mission.get('isActive')}, phase={phase}") # command ignored
             
         alt = self.mission["altitude"]
         oat = self.mission["oat"]

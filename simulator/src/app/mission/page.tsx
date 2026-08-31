@@ -25,6 +25,7 @@ export default function MissionPage() {
 
   const sendCmd = async (payload: any) => {
     setLoading(true);
+    console.log('API Request:', payload);
     setCmdResult('Sending...');
     try {
       const res = await fetch(ENDPOINTS.mission, {
@@ -33,6 +34,7 @@ export default function MissionPage() {
         body: JSON.stringify(payload),
       });
       const json = await res.json();
+        console.log('API Response:', json);
       setCmdResult(`OK: phase=${json.missionPhase || payload.phase} | status=${payload.status || 'OK'}`);
     } catch (e: any) {
       setCmdResult(`ERROR: ${e.message} â€” Check if backend is reachable.`);
@@ -42,23 +44,33 @@ export default function MissionPage() {
   };
 
   const handleStart = () => {
+    console.log('START clicked');
+
     const phase = mission.phase || 'CLIMB';
     mission.setMission({ phase, isActive: true, status: 'RUNNING' });
     sendCmd({ command: 'START', phase, isActive: true, status: 'RUNNING' });
   };
   const handlePause = () => {
+    console.log('PAUSE clicked');
+
     mission.setMission({ phase: 'LOITER', isActive: false, status: 'PAUSED' });
     sendCmd({ command: 'PAUSE', phase: 'LOITER', isActive: false, status: 'PAUSED' });
   };
   const handleResume = () => {
+    console.log('RESUME clicked');
+
     mission.setMission({ phase: 'CRUISE', isActive: true, status: 'RUNNING' });
     sendCmd({ command: 'RESUME', phase: 'CRUISE', isActive: true, status: 'RUNNING' });
   };
   const handleStop = () => {
+    console.log('STOP clicked');
+
     mission.setMission({ phase: 'GROUND_IDLE', isActive: false, status: 'STOPPED' });
     sendCmd({ command: 'STOP', phase: 'GROUND_IDLE', isActive: false, status: 'STOPPED' });
   };
   const handlePhase = (ph: string) => {
+    console.log('Mission phase changed:', ph);
+
     mission.setMission({ phase: ph });
     sendCmd({ phase: ph, isActive: mission.isActive, status: mission.isActive ? 'RUNNING' : 'STOPPED' });
   };
