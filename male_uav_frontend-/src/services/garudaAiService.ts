@@ -26,7 +26,7 @@ export const streamGarudaCommand = async (
       mission: contextData?.mission || {}
     };
 
-    const response = await fetch(`${API_BASE}/api/garuda/analyze`, {
+    const response = await fetch(`${API_BASE_URL}/api/garuda/analyze`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

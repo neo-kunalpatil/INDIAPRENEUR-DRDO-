@@ -36,7 +36,7 @@ export const GarudaAIPanel: React.FC = () => {
       };
 
       
-      const res = await fetch(`${API_BASE}/api/garuda/analyze`, {
+      const res = await fetch(`${API_BASE_URL}/api/garuda/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

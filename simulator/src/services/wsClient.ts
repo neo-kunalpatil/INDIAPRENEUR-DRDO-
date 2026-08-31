@@ -1,5 +1,5 @@
 import { useTelemetryStore } from '../stores/telemetryStore';
-import { WS_BASE } from '../lib/config';
+import { WEBSOCKET_URL } from '../lib/config';
 
 class WSClient {
   private ws: WebSocket | null = null;
@@ -13,7 +13,7 @@ class WSClient {
     if (typeof window === 'undefined') return;
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
 
-    let url = WS_BASE.endsWith('/stream') ? WS_BASE : `${WS_BASE}/stream`;
+    let url = WEBSOCKET_URL.endsWith('/stream') ? WEBSOCKET_URL : `${WEBSOCKET_URL}/stream`;
     
     previously, fallback to 127.0.0.1 to avoid IPv6 issues
     if (this.useIpFallback) {
