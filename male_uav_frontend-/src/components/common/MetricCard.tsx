@@ -67,13 +67,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {title}
             </span>
             {badge && (
-              <span className="text-[9px] font-mono-code px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-300 font-bold border border-blue-500/30">
+              <span className="metric-card-badge text-[9px] font-mono-code px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-300 font-bold border border-blue-500/30">
                 {badge}
               </span>
             )}
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono-code font-bold text-2xl tracking-tight text-white">
+            <span className="metric-card-value font-mono-code font-bold text-2xl tracking-tight text-white">
               {typeof value === 'number' ? (Number.isInteger(value) ? value : Number(value.toFixed(2))) : value}
             </span>
             {unit && (
@@ -99,7 +99,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             </span>
           )}
           {subtext && (
-            <span className="text-gray-400 truncate max-w-[180px]">
+            <span className="metric-card-subtext text-gray-400 truncate max-w-[180px]">
               {subtext}
             </span>
           )}

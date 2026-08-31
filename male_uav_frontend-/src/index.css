@@ -26,7 +26,7 @@
 
 /* Light Mode Color System Overrides (Strictly isolated under html.light-mode) */
 html.light-mode body {
-  background-color: #F6F8FC !important;
+  background-color: #F5F7FA !important;
   color: #111827 !important;
 }
 
@@ -35,7 +35,25 @@ html.light-mode .grid-bg {
   background-size: 20px 20px;
 }
 
-/* CARDS & PANELS IN LIGHT MODE */
+/* SIDEBAR IN LIGHT MODE (#F8FAFC, #D7DFEA Border, #111827 Text) */
+html.light-mode aside {
+  background-color: #F8FAFC !important;
+  border-color: #D7DFEA !important;
+  color: #111827 !important;
+}
+
+html.light-mode aside [class*="text-gray-400"],
+html.light-mode aside [class*="text-slate-400"] {
+  color: #6B7280 !important;
+}
+
+html.light-mode aside .bg-blue-600\/20,
+html.light-mode aside .bg-blue-500\/10 {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+  color: #FFFFFF !important;
+}
+
+/* CARDS & PANELS IN LIGHT MODE (#FFFFFF Surface, #D7DFEA Border, Soft Elevation) */
 html.light-mode main .gcs-card,
 html.light-mode main .panel-border,
 html.light-mode main [class*="bg-slate-900"],
@@ -44,23 +62,32 @@ html.light-mode main [class*="bg-\[\#15171A\]"],
 html.light-mode main [class*="bg-\[\#111318\]"],
 html.light-mode main [class*="bg-\[\#0A0B0D\]"] {
   background-color: #FFFFFF !important;
-  border-color: #CBD5E1 !important;
+  border-color: #D7DFEA !important;
   color: #111827 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.05) !important;
+}
+
+html.light-mode main .gcs-card:hover {
+  border-color: #2563EB !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1) !important;
 }
 
 /* HIGH CONTRAST TYPOGRAPHY IN LIGHT MODE */
+html.light-mode main h1,
+html.light-mode main h2,
+html.light-mode main h3,
+html.light-mode main .font-heading,
 html.light-mode main [class*="text-slate-100"],
-html.light-mode main [class*="text-slate-200"],
-html.light-mode main [class*="text-gray-100"],
-html.light-mode main [class*="text-gray-200"],
-html.light-mode main [class*="text-\[\#F8FAFC\]"] {
+html.light-mode main [class*="text-gray-100"] {
   color: #111827 !important;
+  font-weight: 700 !important;
 }
 
+html.light-mode main [class*="text-slate-200"],
 html.light-mode main [class*="text-slate-300"],
-html.light-mode main [class*="text-gray-300"],
-html.light-mode main [class*="text-\[\#F1F5F9\]"] {
+html.light-mode main [class*="text-gray-200"],
+html.light-mode main [class*="text-gray-300"] {
   color: #374151 !important;
 }
 
@@ -69,35 +96,129 @@ html.light-mode main [class*="text-slate-500"],
 html.light-mode main [class*="text-gray-400"],
 html.light-mode main [class*="text-gray-500"],
 html.light-mode main [class*="text-\[\#B7C0D1\]"] {
-  color: #4B5563 !important;
+  color: #6B7280 !important;
+}
+
+/* GAUGES & NUMERIC VALUES (HIGH CONTRAST BOLD 800 WEIGHT) */
+html.light-mode main [class*="font-telemetry"],
+html.light-mode main [class*="text-\[\#F8FAFC\]"],
+html.light-mode main svg text {
+  fill: #111827 !important;
+  color: #111827 !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
+
+/* STATUS CHIPS & ACCENTS */
+html.light-mode main [class*="text-emerald-400"],
+html.light-mode main [class*="text-emerald-500"],
+html.light-mode main [class*="text-green-400"] {
+  color: #059669 !important;
+}
+
+html.light-mode main [class*="text-amber-400"],
+html.light-mode main [class*="text-amber-500"],
+html.light-mode main [class*="text-orange-400"] {
+  color: #D97706 !important;
+}
+
+html.light-mode main [class*="text-red-400"],
+html.light-mode main [class*="text-red-500"] {
+  color: #DC2626 !important;
+}
+
+html.light-mode main [class*="text-blue-400"],
+html.light-mode main [class*="text-blue-500"],
+html.light-mode main [class*="text-cyan-400"] {
+  color: #0891B2 !important;
 }
 
 html.light-mode main [class*="border-slate-800"],
 html.light-mode main [class*="border-\[\#2A2D33\]"] {
-  border-color: #D1D5DB !important;
+  border-color: #D7DFEA !important;
 }
 
-/* GAUGES IN LIGHT MODE */
-html.light-mode main circle[stroke="#2A3241"] {
+/* GAUGES BACKGROUND CIRCLES */
+html.light-mode main circle[stroke="#2A3241"],
+html.light-mode main circle[stroke="#1E2638"] {
   stroke: #E2E8F0 !important;
 }
 
-/* ENFORCE DARK SIDEBAR NAVIGATION & DARK HEADER TOP RIBBON IN BOTH THEMES */
-aside {
-  background-color: #12161F !important;
-  border-color: #1E2638 !important;
-  color: #F8FAFC !important;
+/* TOP HEADER CONTRAST IN LIGHT MODE */
+html.light-mode header [class*="bg-slate-900"],
+html.light-mode header [class*="bg-slate-950"],
+html.light-mode header [class*="bg-\[\#15171A\]"],
+html.light-mode header [class*="bg-\[\#111318\]"],
+html.light-mode header [class*="bg-\[\#0A0B0D\]"] {
+  background-color: #F8FAFC !important;
+  border-color: #D7DFEA !important;
+  color: #111827 !important;
 }
 
-aside [class*="text-gray-400"] {
-  color: #94A3B8 !important;
+html.light-mode header [class*="text-slate-100"],
+html.light-mode header [class*="text-slate-200"],
+html.light-mode header [class*="text-slate-300"],
+html.light-mode header [class*="text-gray-100"],
+html.light-mode header [class*="text-gray-200"],
+html.light-mode header [class*="text-gray-300"] {
+  color: #111827 !important;
 }
 
-/* TOP HEADER & FOOTER LIGHT MODE */
+html.light-mode header [class*="text-slate-400"],
+html.light-mode header [class*="text-gray-400"] {
+  color: #475569 !important;
+}
+
+/* GAUGES SUBLABELS & UNITS IN LIGHT MODE */
+html.light-mode main .text-xs,
+html.light-mode main [class*="text-slate-400"],
+html.light-mode main [class*="text-slate-500"],
+html.light-mode main [class*="text-gray-400"],
+html.light-mode main [class*="text-gray-500"] {
+  color: #334155 !important;
+  opacity: 1 !important;
+}
+
+/* KPI CARDS: INNOVATION BADGES & ACTION PROMPTS IN LIGHT MODE */
+html.light-mode main [class*="bg-blue-500\/10"],
+html.light-mode main [class*="bg-blue-500\/20"],
+html.light-mode main [class*="bg-blue-600\/10"],
+html.light-mode main [class*="bg-cyan-500\/10"] {
+  background-color: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+  color: #1E40AF !important;
+}
+
+html.light-mode main [class*="text-blue-300"],
+html.light-mode main [class*="text-blue-400"],
+html.light-mode main [class*="text-cyan-300"],
+html.light-mode main [class*="text-cyan-400"] {
+  color: #1D4ED8 !important;
+}
+
+/* METRIC CARD ACCENTS IN LIGHT MODE */
+html.light-mode .metric-card-badge {
+  background-color: #DBEAFE !important;
+  border-color: #93C5FD !important;
+  color: #1E3A8A !important;
+  font-weight: 800 !important;
+}
+
+html.light-mode .metric-card-value {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+html.light-mode .metric-card-subtext {
+  color: #475569 !important;
+  opacity: 1 !important;
+}
+
+/* NAVBAR, FOOTER & FORMS IN LIGHT MODE */
 html.light-mode header,
 html.light-mode footer {
   background-color: #FFFFFF !important;
-  border-color: #D1D5DB !important;
+  border-color: #D7DFEA !important;
   color: #111827 !important;
 }
 
@@ -105,18 +226,18 @@ html.light-mode input,
 html.light-mode select,
 html.light-mode textarea {
   background-color: #FFFFFF !important;
-  border-color: #CBD5E1 !important;
+  border-color: #D7DFEA !important;
   color: #111827 !important;
 }
 
 html.light-mode table th {
-  background-color: #F1F5F9 !important;
-  color: #334155 !important;
-  border-color: #E2E8F0 !important;
+  background-color: #F8FAFC !important;
+  color: #374151 !important;
+  border-color: #D7DFEA !important;
 }
 
 html.light-mode table td {
-  border-color: #E2E8F0 !important;
+  border-color: #D7DFEA !important;
 }
 
 html.light-mode table tr:nth-child(even) {
