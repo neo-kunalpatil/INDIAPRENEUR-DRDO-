@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 
 export interface GarudaAnalysisPayload {
   command?: string;
@@ -26,7 +26,7 @@ export const streamGarudaCommand = async (
       mission: contextData?.mission || {}
     };
 
-    const response = await fetch(`${API_BASE_URL}/api/garuda/analyze`, {
+    const response = await fetch(`${API_BASE}/api/garuda/analyze`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

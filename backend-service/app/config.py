@@ -11,9 +11,9 @@ class Settings:
         self.PORT: int = int(os.getenv("PORT", "8000"))
         self.GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "").strip()
         self.TIMESCALE_DATABASE_URL: str = os.getenv("TIMESCALE_DATABASE_URL", "postgres://tsdbadmin:zevphn0e675bs6lf@r027jcdwwk.tswdu18qwn.tsdb.cloud.timescale.com:39501/tsdb?sslmode=require")
-        self.MAIN_DATABASE_URL: str = os.getenv("MAIN_DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/main_dashboard_db")
-        self.SIMULATOR_API: str = os.getenv("SIMULATOR_API", "http://localhost:4000")
-        self.SIMULATOR_WS: str = os.getenv("SIMULATOR_WS", "ws://localhost:4000/stream")
+        self.MAIN_DATABASE_URL: str = os.getenv("MAIN_DATABASE_URL", "postgres://tsdbadmin:zevphn0e675bs6lf@r027jcdwwk.tswdu18qwn.tsdb.cloud.timescale.com:39501/tsdb?sslmode=require")
+        self.SIMULATOR_API: str = os.getenv("SIMULATOR_API", "https://indiapreneur-drdo-1.onrender.com")
+        self.SIMULATOR_WS: str = os.getenv("SIMULATOR_WS", "wss://indiapreneur-drdo-1.onrender.com/stream")
         self.LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
 settings = Settings()

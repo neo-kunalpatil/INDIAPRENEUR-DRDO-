@@ -1,6 +1,11 @@
-// Central config — all backend URLs come from here
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-export const WS_BASE  = process.env.NEXT_PUBLIC_WS_URL  || 'ws://localhost:4000';
+// Central config - all backend URLs come from here
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://indiapreneur-drdo-1.onrender.com";
+const WS_BASE  = process.env.NEXT_PUBLIC_WS_URL  || "wss://indiapreneur-drdo-1.onrender.com";
+
+console.log("API_BASE =", API_BASE);
+console.log("WS_BASE =", WS_BASE);
+
+export { API_BASE, WS_BASE };
 
 export const ENDPOINTS = {
   mission:   `${API_BASE}/api/mission`,

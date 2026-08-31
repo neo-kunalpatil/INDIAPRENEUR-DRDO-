@@ -8,6 +8,7 @@ import {
   DemoTourStep 
 } from '../types';
 import { 
+import { API_BASE, WS_BASE } from '../config';
   MOCK_UAV_FLEET, 
   MOCK_ACTIVE_MISSION, 
   PRESET_FAULTS, 
@@ -123,7 +124,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Single unified GET /api/system/startup-state restoration on mount
   useEffect(() => {
-    fetch('http://localhost:8000/api/system/startup-state')
+    fetch(`${API_BASE}/api/system/startup-state`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -207,11 +208,11 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const connectWS = () => {
       try {
-        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
-        ws = new WebSocket(`${wsUrl}/stream`);
+        
+        ws = new WebSocket(`${WS_BASE}/stream`);
 
         ws.onopen = () => {
-          console.log(`[Main Dashboard] Connected to Main Backend Gateway (${wsUrl}/stream)`);
+          console.log(`[Main Dashboard] Connected to Main Backend Gateway (${WS_BASE}/stream)`);
         };
 
         ws.onmessage = (event) => {
@@ -296,7 +297,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Initial REST fetch from Main Backend Gateway (Port 8000) for active TimescaleDB faults
   useEffect(() => {
-    fetch('http://localhost:8000/api/faults?active=true')
+    fetch(`${API_BASE}/api/faults?active=true`)
       .then(res => res.json())
       .then(data => {
         const rawFaults = data.activeFaults || data.active_faults || [];
@@ -341,7 +342,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetFault = PRESET_FAULTS.find(p => p.id === faultId) || { name: faultId, component: 'powerplant' };
     
     // POST request to backend TimescaleDB database
-    fetch('http://localhost:8000/api/faults', {
+    fetch(`${API_BASE}/api/faults`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -402,7 +403,7 @@ export const GcsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     // PATCH request to backend TimescaleDB database
-    fetch(`http://localhost:8000/api/faults/${faultId}/remove`, {
+    fetch(`${API_BASE}/api/faults/${faultId}/remove`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: faultId, status: 'REMOVED' })
