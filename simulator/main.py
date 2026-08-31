@@ -302,6 +302,10 @@ async def get_alerts():
 async def get_system():
     return {"status": "HEALTHY", "version": "4.2.8"}
 
+@app.get("/")
+async def root():
+    return {"status": "alive"}
+
 @app.get("/health")
 async def get_health():
     return {"status": "ok"}

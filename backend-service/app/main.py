@@ -154,9 +154,13 @@ async def get_system_startup_state():
         ]
     }
 
+@app.get("/")
+async def root():
+    return {"status": "alive"}
+
 @app.get("/health")
 async def health_check():
-    return {"status": "online", "service": "backend-service", "version": "4.2.8"}
+    return {"status": "ok", "service": "backend-service", "version": "4.2.8"}
 
 @app.websocket("/ws")
 @app.websocket("/stream")
